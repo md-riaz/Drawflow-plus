@@ -100,6 +100,7 @@ class ConnectionManager {
     drawflowPlus.getConnectionStyle = this.getStyle.bind(this);
     drawflowPlus.setConnectionMetadata = this.setMetadata.bind(this);
     drawflowPlus.getConnectionMetadata = this.getMetadata.bind(this);
+    drawflowPlus.createBuilder = this.createBuilder.bind(this);
   }
 
   /**
@@ -399,14 +400,15 @@ class ConnectionManager {
    * @returns {Object} - Validated metadata
    */
   _validateMetadata(meta) {
+    const safeMeta = meta || {};
     return {
-      type: meta.type || 'default',
-      label: meta.label || '',
-      description: meta.description || '',
-      dataType: meta.dataType || 'any',
-      required: meta.required || false,
-      custom: meta.custom || {},
-      tags: meta.tags || []
+      type: safeMeta.type || 'default',
+      label: safeMeta.label || '',
+      description: safeMeta.description || '',
+      dataType: safeMeta.dataType || 'any',
+      required: safeMeta.required || false,
+      custom: safeMeta.custom || {},
+      tags: safeMeta.tags || []
     };
   }
 

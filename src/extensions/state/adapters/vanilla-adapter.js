@@ -168,7 +168,7 @@ class VanillaAdapter extends AdapterInterface {
     let target = this.state;
 
     for (const key of keys) {
-      if (!(key in target) || typeof target[key] !== 'object') {
+      if (!(key in target) || typeof target[key] !== 'object' || target[key] === null) {
         target[key] = {};
       }
       target = target[key];

@@ -294,7 +294,7 @@ class ReactiveState {
     let target = this._state;
 
     for (const key of keys) {
-      if (!(key in target) || typeof target[key] !== 'object') {
+      if (!(key in target) || typeof target[key] !== 'object' || target[key] === null) {
         target[key] = {};
       }
       target = target[key];
@@ -302,6 +302,7 @@ class ReactiveState {
 
     target[lastKey] = value;
     this._markDirty(path);
+    this._notifySubscribers(path, value, oldValue);
 
     // Record mutation
     this._mutations.push({
@@ -354,7 +355,13 @@ class ReactiveState {
     this._subscriptions.get(path).add(callback);
 
     return () => {
-      this._subscriptions.get(path).delete(callback);
+      const subs = this._subscriptions.get(path);
+      if (subs) {
+        subs.delete(callback);
+        if (subs.size === 0) {
+          this._subscriptions.delete(path);
+        }
+      }
     };
   }
 

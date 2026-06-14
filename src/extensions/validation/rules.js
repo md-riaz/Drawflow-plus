@@ -324,12 +324,12 @@ export function when(condition, rule) {
  * @returns {Function} - Async validation rule
  *
  * @example
- * const rule = async((value) => {
+ * const rule = asyncRule((value) => {
  *   const exists = await checkEmailExists(value);
  *   return { valid: !exists, message: 'Email already in use' };
  * });
  */
-export function async(validatorFn, message) {
+export function asyncRule(validatorFn, message) {
   if (typeof validatorFn !== 'function') {
     throw new Error('Async validator must be a function');
   }

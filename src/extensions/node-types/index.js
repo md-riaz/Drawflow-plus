@@ -149,6 +149,7 @@ class NodeTypeSystem {
    * @returns {Object} - Validation result {valid: boolean, errors: Array}
    */
   validate(typeId, config) {
+    const safeConfig = config || {};
     const errors = [];
 
     // Check if type exists
@@ -163,22 +164,31 @@ class NodeTypeSystem {
     // Validate required fields
     if (definition.fields) {
       for (const [fieldName, fieldDef] of Object.entries(definition.fields)) {
-        if (fieldDef.required && !config[fieldName]) {
+        if (fieldDef.required && !safeConfig[fieldName]) {
           errors.push(`Field "${fieldName}" is required`);
         }
 
         // Validate field type
-        if (config[fieldName] !== undefined && fieldDef.type) {
-          if (typeof config[fieldName] !== fieldDef.type) {
+        if (safeConfig[fieldName] !== undefined && fieldDef.type) {
+          const fieldValue = safeConfig[fieldName];
+          let typeError = false;
+          if (fieldDef.type === 'array') {
+            if (!Array.isArray(fieldValue)) {
+              typeError = true;
+            }
+          } else if (typeof fieldValue !== fieldDef.type) {
+            typeError = true;
+          }
+          if (typeError) {
             errors.push(
-              `Field "${fieldName}" must be of type ${fieldDef.type}, got ${typeof config[fieldName]}`
+              `Field "${fieldName}" must be of type ${fieldDef.type}, got ${Array.isArray(fieldValue) ? 'array' : typeof fieldValue}`
             );
           }
         }
 
         // Apply field-level validation rules
-        if (config[fieldName] !== undefined && fieldDef.validate) {
-          const fieldError = fieldDef.validate(config[fieldName]);
+        if (safeConfig[fieldName] !== undefined && fieldDef.validate) {
+          const fieldError = fieldDef.validate(safeConfig[fieldName]);
           if (fieldError) {
             errors.push(`Field "${fieldName}": ${fieldError}`);
           }
@@ -188,13 +198,13 @@ class NodeTypeSystem {
         if (fieldDef.dependsOn) {
           const dependency = fieldDef.dependsOn;
           if (dependency.field) {
-            const depValue = config[dependency.field];
+            const depValue = safeConfig[dependency.field];
             const expectedValues = Array.isArray(dependency.value)
               ? dependency.value
               : [dependency.value];
             if (!expectedValues.includes(depValue)) {
               // Field should not be present if dependency not met
-              if (config[fieldName] !== undefined && fieldDef.required) {
+              if (safeConfig[fieldName] !== undefined && fieldDef.required) {
                 errors.push(
                   `Field "${fieldName}" requires "${dependency.field}" to be ${expectedValues.join(' or ')}`
                 );
@@ -208,7 +218,7 @@ class NodeTypeSystem {
     // Run custom validator if registered
     const customValidator = this.validators.get(typeId);
     if (customValidator) {
-      const customResult = customValidator(config, definition);
+      const customResult = customValidator(safeConfig, definition);
       if (!customResult.valid) {
         errors.push(...(customResult.errors || []));
       }
@@ -485,7 +495,7 @@ class NodeTypeSystem {
     for (const key in newConfig) {
       if (!(key in oldConfig)) {
         added[key] = newConfig[key];
-      } else if (oldConfig[key] !== newConfig[key]) {
+      } else if (!this._isEqual(oldConfig[key], newConfig[key])) {
         modified[key] = {
           old: oldConfig[key],
           new: newConfig[key]
@@ -501,6 +511,20 @@ class NodeTypeSystem {
     }
 
     return { added, removed, modified };
+  }
+
+  _isEqual(a, b) {
+    if (a === b) return true;
+    if (a === null || b === null) return false;
+    if (typeof a !== typeof b) return false;
+    if (typeof a === 'object') {
+      try {
+        return JSON.stringify(a) === JSON.stringify(b);
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
   }
 }
 
