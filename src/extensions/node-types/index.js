@@ -495,7 +495,7 @@ class NodeTypeSystem {
     for (const key in newConfig) {
       if (!(key in oldConfig)) {
         added[key] = newConfig[key];
-      } else if (JSON.stringify(oldConfig[key]) !== JSON.stringify(newConfig[key])) {
+      } else if (!this._isEqual(oldConfig[key], newConfig[key])) {
         modified[key] = {
           old: oldConfig[key],
           new: newConfig[key]
@@ -511,6 +511,20 @@ class NodeTypeSystem {
     }
 
     return { added, removed, modified };
+  }
+
+  _isEqual(a, b) {
+    if (a === b) return true;
+    if (a === null || b === null) return false;
+    if (typeof a !== typeof b) return false;
+    if (typeof a === 'object') {
+      try {
+        return JSON.stringify(a) === JSON.stringify(b);
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
   }
 }
 

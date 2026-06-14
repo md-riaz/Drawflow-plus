@@ -238,8 +238,11 @@ class HistoryManager {
     this.future = [...removed, ...this.future];
 
     this.isRecording = true;
-    this.state.restore(target.snapshot);
-    this.isRecording = false;
+    try {
+      this.state.restore(target.snapshot);
+    } finally {
+      this.isRecording = false;
+    }
 
     return true;
   }
