@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Type System - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 80vh;
+        }
+
+        .section {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .section-left {
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="url"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .node-type-list {
+            margin-top: 20px;
+        }
+
+        .node-type-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            cursor: move;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .node-type-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.1);
+            transform: translateX(3px);
+        }
+
+        .node-type-item.dragging {
+            opacity: 0.7;
+            background: #667eea;
+            color: white;
+        }
+
+        .node-type-name {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .node-type-desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .node-type-item.dragging .node-type-desc {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .output {
+            background: white;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .output-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .output pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #444;
+        }
+
+        .validation-result {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .validation-valid {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .validation-invalid {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .error-list {
+            margin-top: 8px;
+            padding-left: 20px;
+        }
+
+        .error-item {
+            list-style-type: disc;
+            margin-bottom: 4px;
+        }
+
+        .canvas {
+            background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0),
+                        linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            background-color: #fafafa;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .drop-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px dashed #667eea;
+            font-size: 16px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .canvas.drag-over .drop-zone {
+            display: flex;
+        }
+
+        .node {
+            position: absolute;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            padding: 12px;
+            min-width: 120px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            cursor: move;
+            user-select: none;
+            z-index: 10;
+        }
+
+        .node.selected {
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            border-color: #764ba2;
+        }
+
+        .node-header {
+            font-weight: 600;
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .node-type {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+        }
+
+        .node-config {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .node-config-item {
+            margin: 4px 0;
+            word-break: break-all;
+        }
+
+        .node-key {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .node-value {
+            color: #764ba2;
+        }
+
+        .node-delete {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .node:hover .node-delete {
+            display: flex;
+        }
+
+        .node-delete:hover {
+            background: #c0392b;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .status {
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .status-info {
+            background: #cfe9ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .console {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .console-log {
+            margin-bottom: 4px;
+        }
+
+        .console-log.info {
+            color: #4ec9b0;
+        }
+
+        .console-log.warn {
+            color: #ce9178;
+        }
+
+        .console-log.error {
+            color: #f48771;
+        }
+
+        .console-log.debug {
+            color: #9cdcfe;
+        }
+
+        @media (max-width: 1000px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .section-left {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                min-height: auto;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel: Configuration -->
+        <div class="section section-left">
+            <h1>Node Type System</h1>
+            <p class="subtitle">Interactive Demo</p>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="register">Register Type</button>
+                <button class="tab" data-tab="create">Create Node</button>
+                <button class="tab" data-tab="types">All Types</button>
+            </div>
+
+            <!-- Register Tab -->
+            <div id="register" class="tab-content active">
+                <h3 style="margin-top: 10px; margin-bottom: 15px; color: #333;">Register New Type</h3>
+
+                <div class="form-group">
+                    <label for="typeId">Type ID *</label>
+                    <input type="text" id="typeId" placeholder="e.g., myCustomNode">
+                </div>
+
+                <div class="form-group">
+                    <label for="typeLabel">Label *</label>
+                    <input type="text" id="typeLabel" placeholder="e.g., My Custom Node">
+                </div>
+
+                <div class="form-group">
+                    <label for="typeDescription">Description</label>
+                    <input type="text" id="typeDescription" placeholder="Brief description">
+                </div>
+
+                <div class="form-group">
+                    <label for="typeCategory">Category</label>
+                    <select id="typeCategory">
+                        <option value="general">General</option>
+                        <option value="basic">Basic</option>
+                        <option value="call">Call</option>
+                        <option value="processing">Processing</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="registerNodeType()">Register Type</button>
+                    <button class="btn-secondary" onclick="loadBuiltInTypes()">Load Built-ins</button>
+                </div>
+
+                <div id="registerOutput" class="output" style="display:none;"></div>
+            </div>
+
+            <!-- Create Tab -->
+            <div id="create" class="tab-content">
+                <h3 style="margin-top: 10px; margin-bottom: 15px; color: #333;">Create Node Instance</h3>
+
+                <div class="form-group">
+                    <label for="createTypeId">Node Type *</label>
+                    <select id="createTypeId" onchange="updateCreateForm()"></select>
+                </div>
+
+                <div id="createFields"></div>
+
+                <div class="form-group">
+                    <label for="createConfig">Configuration (JSON)</label>
+                    <textarea id="createConfig" placeholder='{"field1": "value1"}'></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="createNode()">Create Node</button>
+                    <button class="btn-secondary" onclick="clearCanvas()">Clear Canvas</button>
+                </div>
+
+                <div id="createOutput" class="output" style="display:none;"></div>
+            </div>
+
+            <!-- Types Tab -->
+            <div id="types" class="tab-content">
+                <h3 style="margin-top: 10px; margin-bottom: 15px; color: #333;">Registered Types</h3>
+
+                <div class="node-type-list" id="typesList"></div>
+
+                <button class="btn-secondary" style="margin-top: 10px; width: 100%;" onclick="refreshTypesList()">
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Canvas -->
+        <div class="section">
+            <h1>Visual Canvas</h1>
+            <p class="subtitle">Drag node types here</p>
+
+            <div class="status status-info">
+                Drag node types from left panel or double-click to create
+            </div>
+
+            <div class="canvas" id="canvas">
+                <div class="drop-zone">Drop here to create node</div>
+            </div>
+
+            <div id="canvasConsole" class="console"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import NodeTypeSystem from '../src/extensions/node-types/index.js';
+        import {
+            registerBuiltInTypes,
+            InputNodeType,
+            OutputNodeType,
+            ProcessNodeType,
+            DecisionNodeType,
+            IVRNodeType
+        } from '../src/extensions/node-types/definitions.js';
+
+        // Create global system instance
+        window.nodeTypeSystem = new NodeTypeSystem({
+            strict: false,
+            onTypeRegistered: (id, def) => {
+                log(`Type registered: ${id}`, 'info');
+                updateTypesList();
+                updateCreateTypeSelect();
+            },
+            onNodeCreated: (node) => {
+                log(`Node created: ${node.id}`, 'success');
+                renderNodeOnCanvas(node);
+            }
+        });
+
+        window.createdNodes = new Map();
+
+        // Logging function
+        window.log = function(message, type = 'info') {
+            const consoleEl = document.getElementById('canvasConsole');
+            const entry = document.createElement('div');
+            entry.className = `console-log ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            consoleEl.appendChild(entry);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        };
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Register node type
+        window.registerNodeType = function() {
+            try {
+                const definition = {
+                    label: document.getElementById('typeLabel').value,
+                    description: document.getElementById('typeDescription').value,
+                    category: document.getElementById('typeCategory').value,
+                    inputs: { input: { label: 'Input' } },
+                    outputs: { output: { label: 'Output' } },
+                    fields: {}
+                };
+
+                if (!definition.label) {
+                    alert('Label is required');
+                    return;
+                }
+
+                const typeId = document.getElementById('typeId').value || `custom_${Date.now()}`;
+                window.nodeTypeSystem.register(typeId, definition);
+
+                document.getElementById('typeId').value = '';
+                document.getElementById('typeLabel').value = '';
+                document.getElementById('typeDescription').value = '';
+
+                log(`Registered type: ${typeId}`, 'success');
+                showOutput('registerOutput', `Type "${typeId}" registered successfully`);
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                showOutput('registerOutput', `Error: ${error.message}`, true);
+            }
+        };
+
+        // Load built-in types
+        window.loadBuiltInTypes = function() {
+            try {
+                registerBuiltInTypes(window.nodeTypeSystem);
+                log('Built-in types loaded', 'success');
+                showOutput('registerOutput', 'Built-in types loaded successfully');
+                updateTypesList();
+            } catch (error) {
+                log(`Error loading built-ins: ${error.message}`, 'error');
+                showOutput('registerOutput', `Error: ${error.message}`, true);
+            }
+        };
+
+        // Update create form based on selected type
+        window.updateCreateForm = function() {
+            const typeId = document.getElementById('createTypeId').value;
+            const fieldsEl = document.getElementById('createFields');
+            fieldsEl.innerHTML = '';
+
+            if (!typeId) return;
+
+            const type = window.nodeTypeSystem.get(typeId);
+            if (!type || !type.fields) return;
+
+            for (const [fieldName, fieldDef] of Object.entries(type.fields)) {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+
+                const label = document.createElement('label');
+                label.textContent = fieldDef.label || fieldName;
+                if (fieldDef.required) label.textContent += ' *';
+
+                const input = document.createElement('input');
+                input.type = fieldDef.type === 'number' ? 'number' : 'text';
+                input.id = `field_${fieldName}`;
+                input.placeholder = fieldDef.label || fieldName;
+
+                group.appendChild(label);
+                group.appendChild(input);
+                fieldsEl.appendChild(group);
+            }
+        };
+
+        // Create node
+        window.createNode = function() {
+            try {
+                const typeId = document.getElementById('createTypeId').value;
+                if (!typeId) {
+                    alert('Select a node type');
+                    return;
+                }
+
+                let config = {};
+                const fieldsEl = document.getElementById('createFields');
+                fieldsEl.querySelectorAll('input').forEach(input => {
+                    const fieldName = input.id.replace('field_', '');
+                    const value = input.value;
+                    if (value) {
+                        config[fieldName] = isNaN(value) ? value : parseFloat(value);
+                    }
+                });
+
+                const configJson = document.getElementById('createConfig').value;
+                if (configJson) {
+                    config = { ...config, ...JSON.parse(configJson) };
+                }
+
+                const node = window.nodeTypeSystem.createNode(typeId, config, {
+                    x: Math.random() * 400,
+                    y: Math.random() * 400
+                });
+
+                if (node) {
+                    window.createdNodes.set(node.id, node);
+                    log(`Created: ${node.typeId}`, 'success');
+                }
+            } catch (error) {
+                log(`Error creating node: ${error.message}`, 'error');
+            }
+        };
+
+        // Render node on canvas
+        window.renderNodeOnCanvas = function(node) {
+            const canvas = document.getElementById('canvas');
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'node';
+            nodeEl.id = `node_${node.id}`;
+            nodeEl.style.left = node.position.x + 'px';
+            nodeEl.style.top = node.position.y + 'px';
+
+            const header = document.createElement('div');
+            header.className = 'node-header';
+            header.innerHTML = `
+                <div class="node-type">${node.typeId}</div>
+                <div style="margin-top: 4px;">${node.id.substr(0, 20)}...</div>
+            `;
+
+            const config = document.createElement('div');
+            config.className = 'node-config';
+            for (const [key, value] of Object.entries(node.config)) {
+                const item = document.createElement('div');
+                item.className = 'node-config-item';
+                item.innerHTML = `<span class="node-key">${key}:</span> <span class="node-value">${JSON.stringify(value)}</span>`;
+                config.appendChild(item);
+            }
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'node-delete';
+            deleteBtn.textContent = '×';
+            deleteBtn.onclick = () => {
+                nodeEl.remove();
+                window.createdNodes.delete(node.id);
+                log(`Deleted: ${node.id}`, 'info');
+            };
+
+            nodeEl.appendChild(header);
+            nodeEl.appendChild(config);
+            nodeEl.appendChild(deleteBtn);
+            canvas.appendChild(nodeEl);
+
+            // Make draggable
+            makeDraggable(nodeEl);
+        };
+
+        // Make element draggable
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+            element.onmousedown = (e) => {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+
+                document.onmouseup = () => {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                };
+
+                document.onmousemove = (e) => {
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    element.style.top = (element.offsetTop - pos2) + 'px';
+                    element.style.left = (element.offsetLeft - pos1) + 'px';
+                };
+            };
+        }
+
+        // Update types list
+        window.updateTypesList = function() {
+            const list = document.getElementById('typesList');
+            list.innerHTML = '';
+
+            const types = window.nodeTypeSystem.getAll();
+            if (types.length === 0) {
+                list.innerHTML = '<p style="color: #999; font-size: 12px;">No types registered</p>';
+                return;
+            }
+
+            types.forEach(({ id, definition }) => {
+                const item = document.createElement('div');
+                item.className = 'node-type-item';
+                item.draggable = true;
+                item.innerHTML = `
+                    <div class="node-type-name">${definition.label}</div>
+                    <div class="node-type-desc">${definition.description || id}</div>
+                `;
+
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.effectAllowed = 'copy';
+                    e.dataTransfer.setData('typeId', id);
+                });
+
+                list.appendChild(item);
+            });
+        };
+
+        // Update create type select
+        window.updateCreateTypeSelect = function() {
+            const select = document.getElementById('createTypeId');
+            const current = select.value;
+            select.innerHTML = '<option value="">Select a type...</option>';
+
+            window.nodeTypeSystem.getAll().forEach(({ id }) => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = id;
+                select.appendChild(option);
+            });
+
+            select.value = current;
+        };
+
+        // Refresh types list
+        window.refreshTypesList = function() {
+            updateTypesList();
+        };
+
+        // Clear canvas
+        window.clearCanvas = function() {
+            document.querySelectorAll('.node').forEach(n => n.remove());
+            window.createdNodes.clear();
+            log('Canvas cleared', 'info');
+        };
+
+        // Show output
+        function showOutput(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            el.style.display = 'block';
+            el.innerHTML = `<div class="output-title">${isError ? 'Error' : 'Result'}:</div><pre>${typeof message === 'string' ? message : JSON.stringify(message, null, 2)}</pre>`;
+        }
+
+        // Canvas drag and drop
+        const canvas = document.getElementById('canvas');
+
+        canvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            canvas.classList.add('drag-over');
+        });
+
+        canvas.addEventListener('dragleave', () => {
+            canvas.classList.remove('drag-over');
+        });
+
+        canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            canvas.classList.remove('drag-over');
+
+            const typeId = e.dataTransfer.getData('typeId');
+            if (typeId) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const node = window.nodeTypeSystem.createNode(typeId, {}, { x, y });
+                if (node) {
+                    window.createdNodes.set(node.id, node);
+                }
+            }
+        });
+
+        // Initialize
+        log('Node Type System Demo Ready', 'info');
+        loadBuiltInTypes();
+    </script>
+</body>
+</html>
