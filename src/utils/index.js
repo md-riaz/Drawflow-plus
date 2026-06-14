@@ -31,7 +31,7 @@ export function deepClone(obj) {
   if (obj instanceof Object) {
     const clonedObj = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         clonedObj[key] = deepClone(obj[key]);
       }
     }
@@ -49,7 +49,7 @@ export function deepMerge(target, source) {
   const result = deepClone(target);
 
   for (const key in source) {
-    if (source.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
       if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
         result[key] = deepMerge(result[key] || {}, source[key]);
       } else {

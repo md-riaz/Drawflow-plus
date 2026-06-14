@@ -140,14 +140,14 @@ class ConnectionParser {
       const value = meta[key];
 
       if (value === undefined || value === null) {
-        validated[key] = schema.default;
+        validated[key] = (typeof schema.default === 'object' && schema.default !== null) ? JSON.parse(JSON.stringify(schema.default)) : schema.default;
         return;
       }
 
       // Type validation
       const valueType = Array.isArray(value) ? 'array' : typeof value;
       if (valueType !== schema.type) {
-        validated[key] = schema.default;
+        validated[key] = (typeof schema.default === 'object' && schema.default !== null) ? JSON.parse(JSON.stringify(schema.default)) : schema.default;
         return;
       }
 

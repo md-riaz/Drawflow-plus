@@ -1122,8 +1122,8 @@
                 const field = nodeType.config[key];
                 if (!field) return;
 
-                if (field.type === 'number' && typeof value !== 'number') {
-                    errors.push(`${key} must be a number`);
+                if (field.type === 'number' && (typeof value !== 'number' || Number.isNaN(value))) {
+                    errors.push(`${key} must be a valid number`);
                 } else if (field.min !== undefined && value < field.min) {
                     errors.push(`${key} must be at least ${field.min}`);
                 } else if (field.max !== undefined && value > field.max) {
@@ -1199,7 +1199,9 @@
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     const d = `M ${x1} ${y1} C ${x1} ${(y1 + y2) / 2}, ${x2} ${(y1 + y2) / 2}, ${x2} ${y2}`;
                     line.setAttribute('d', d);
-                    line.setAttribute('stroke', NODE_TYPES[appState.nodes[edge.from].type].color);
+                    const sourceNode = appState.nodes[edge.from];
+                    const strokeColor = sourceNode ? NODE_TYPES[sourceNode.type].color : '#ccc';
+                    line.setAttribute('stroke', strokeColor);
                     line.setAttribute('stroke-width', '2');
                     line.setAttribute('fill', 'none');
                     line.setAttribute('stroke-linecap', 'round');

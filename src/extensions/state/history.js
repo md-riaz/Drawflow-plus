@@ -99,8 +99,11 @@ class HistoryManager {
     // Restore previous state
     const entry = this.past.pop();
     this.isRecording = true;
-    this.state.restore(entry.snapshot);
-    this.isRecording = false;
+    try {
+      this.state.restore(entry.snapshot);
+    } finally {
+      this.isRecording = false;
+    }
 
     return true;
   }
@@ -125,8 +128,11 @@ class HistoryManager {
     // Restore future state
     const entry = this.future.pop();
     this.isRecording = true;
-    this.state.restore(entry.snapshot);
-    this.isRecording = false;
+    try {
+      this.state.restore(entry.snapshot);
+    } finally {
+      this.isRecording = false;
+    }
 
     return true;
   }

@@ -231,7 +231,9 @@ function addNode(nodeType, x = 100, y = 100) {
   };
 
   // Add to Drawflow
-  drawflowInstance.addNode(nodeType, nodeConfig.outputs || {}, nodeConfig.inputs || {}, x, y);
+  const numInputs = nodeConfig.inputs ? Object.keys(nodeConfig.inputs).length : 0;
+  const numOutputs = nodeConfig.outputs ? Object.keys(nodeConfig.outputs).length : 0;
+  drawflowInstance.addNode(nodeType, numInputs, numOutputs, x, y);
 
   // Update app state
   const appState = drawflowPlus.getStore('app');
