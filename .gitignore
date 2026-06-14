@@ -35,3 +35,6 @@ yarn-error.log*
 # Documentation
 docs/html/
 docs/out/
+
+# Claude Code internal state
+.claude/
