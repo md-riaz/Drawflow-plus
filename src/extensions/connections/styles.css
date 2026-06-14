@@ -1,0 +1,377 @@
+/**
+ * Connection Styling Stylesheet
+ * Provides visual styles for connection status, types, and interactions
+ */
+
+/* ============================================
+   Base Connection Styles
+   ============================================ */
+
+.drawflow svg .connection {
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+}
+
+.drawflow svg .connection:hover {
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+}
+
+/* ============================================
+   Status-Based Connection Styles
+   ============================================ */
+
+/* Primary Status - Default blue */
+.drawflow svg .connection[data-status="primary"],
+.drawflow svg .connection.connection-status-primary {
+  stroke: #3498db;
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.drawflow svg .connection[data-status="primary"]:hover,
+.drawflow svg .connection.connection-status-primary:hover {
+  stroke: #2980b9;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px rgba(52, 152, 219, 0.4));
+}
+
+/* Success Status - Green */
+.drawflow svg .connection[data-status="success"],
+.drawflow svg .connection.connection-status-success {
+  stroke: #2ecc71;
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.drawflow svg .connection[data-status="success"]:hover,
+.drawflow svg .connection.connection-status-success:hover {
+  stroke: #27ae60;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px rgba(46, 204, 113, 0.4));
+}
+
+/* Danger Status - Red */
+.drawflow svg .connection[data-status="danger"],
+.drawflow svg .connection.connection-status-danger {
+  stroke: #e74c3c;
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+.drawflow svg .connection[data-status="danger"]:hover,
+.drawflow svg .connection.connection-status-danger:hover {
+  stroke: #c0392b;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px rgba(231, 76, 60, 0.4));
+}
+
+/* Warning Status - Orange */
+.drawflow svg .connection[data-status="warning"],
+.drawflow svg .connection.connection-status-warning {
+  stroke: #f39c12;
+  stroke-width: 2;
+  stroke-dasharray: 5, 5;
+}
+
+.drawflow svg .connection[data-status="warning"]:hover,
+.drawflow svg .connection.connection-status-warning:hover {
+  stroke: #d68910;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px rgba(243, 156, 18, 0.4));
+}
+
+/* ============================================
+   Line Style Variations
+   ============================================ */
+
+/* Solid lines */
+.drawflow svg .connection.connection-solid {
+  stroke-dasharray: none;
+}
+
+/* Dashed lines */
+.drawflow svg .connection.connection-dashed {
+  stroke-dasharray: 5, 5;
+}
+
+/* Dotted lines */
+.drawflow svg .connection.connection-dotted {
+  stroke-dasharray: 2, 2;
+}
+
+/* Dash-dot lines */
+.drawflow svg .connection.connection-dashdot {
+  stroke-dasharray: 5, 2, 2, 2;
+}
+
+/* ============================================
+   Required Connection Indicator
+   ============================================ */
+
+.drawflow svg .connection.connection-required {
+  stroke-width: 2.5;
+}
+
+.drawflow svg .connection.connection-required::before {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #e74c3c;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ============================================
+   Data Type Styling
+   ============================================ */
+
+/* String type */
+.drawflow svg .connection.connection-data-string {
+  stroke-dasharray: none;
+}
+
+/* Number type */
+.drawflow svg .connection.connection-data-number {
+  stroke-width: 1.5;
+}
+
+/* Boolean type */
+.drawflow svg .connection.connection-data-boolean {
+  stroke-dasharray: 2, 2;
+}
+
+/* Object type */
+.drawflow svg .connection.connection-data-object {
+  stroke-width: 2.5;
+}
+
+/* Array type */
+.drawflow svg .connection.connection-data-array {
+  stroke-width: 2;
+  stroke-dasharray: 4, 4;
+}
+
+/* ============================================
+   Connection Labels
+   ============================================ */
+
+.drawflow .connection-label {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #333;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.drawflow .connection-label.connection-label-primary {
+  border-color: #3498db;
+  background: rgba(52, 152, 219, 0.05);
+}
+
+.drawflow .connection-label.connection-label-success {
+  border-color: #2ecc71;
+  background: rgba(46, 204, 113, 0.05);
+}
+
+.drawflow .connection-label.connection-label-danger {
+  border-color: #e74c3c;
+  background: rgba(231, 76, 60, 0.05);
+}
+
+.drawflow .connection-label.connection-label-warning {
+  border-color: #f39c12;
+  background: rgba(243, 156, 18, 0.05);
+}
+
+/* ============================================
+   Connection Animations
+   ============================================ */
+
+/* Animated flow effect */
+@keyframes connectionFlow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 10;
+  }
+}
+
+.drawflow svg .connection.connection-animated {
+  stroke-dasharray: 5, 5;
+  animation: connectionFlow 0.5s linear infinite;
+}
+
+/* Pulse effect for active connections */
+@keyframes connectionPulse {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(52, 152, 219, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 4px rgba(52, 152, 219, 0.8));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgba(52, 152, 219, 0.5));
+  }
+}
+
+.drawflow svg .connection.connection-active {
+  animation: connectionPulse 1.5s ease-in-out infinite;
+}
+
+/* Glow effect for highlight */
+@keyframes connectionGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 0 rgba(46, 204, 113, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(46, 204, 113, 0.6));
+  }
+}
+
+.drawflow svg .connection.connection-highlight {
+  animation: connectionGlow 1s ease-in-out infinite;
+}
+
+/* ============================================
+   Connection Arrow/Marker Styles
+   ============================================ */
+
+.drawflow svg marker[data-connection-marker="primary"] {
+  fill: #3498db;
+}
+
+.drawflow svg marker[data-connection-marker="success"] {
+  fill: #2ecc71;
+}
+
+.drawflow svg marker[data-connection-marker="danger"] {
+  fill: #e74c3c;
+}
+
+.drawflow svg marker[data-connection-marker="warning"] {
+  fill: #f39c12;
+}
+
+/* ============================================
+   Mobile Responsive Styles
+   ============================================ */
+
+@media (max-width: 768px) {
+  .drawflow svg .connection {
+    stroke-width: 2;
+  }
+
+  .drawflow svg .connection:hover {
+    stroke-width: 2.5;
+  }
+
+  .drawflow .connection-label {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .drawflow svg .connection {
+    stroke-width: 1.5;
+  }
+
+  .drawflow svg .connection:hover {
+    stroke-width: 2;
+  }
+
+  .drawflow .connection-label {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+
+  .drawflow svg .connection.connection-required {
+    stroke-width: 2;
+  }
+}
+
+/* ============================================
+   Disabled State
+   ============================================ */
+
+.drawflow svg .connection.connection-disabled {
+  stroke: #bdc3c7;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ============================================
+   Selected State
+   ============================================ */
+
+.drawflow svg .connection.connection-selected {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.4));
+}
+
+/* ============================================
+   Error State
+   ============================================ */
+
+.drawflow svg .connection.connection-error {
+  stroke: #e74c3c;
+  stroke-dasharray: 3, 3;
+  stroke-width: 2.5;
+  animation: connectionPulse 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px rgba(231, 76, 60, 0.5));
+}
+
+/* ============================================
+   Grouped Connection Highlighting
+   ============================================ */
+
+.drawflow svg .connection-group-1 {
+  stroke: #3498db;
+}
+
+.drawflow svg .connection-group-2 {
+  stroke: #9b59b6;
+}
+
+.drawflow svg .connection-group-3 {
+  stroke: #e67e22;
+}
+
+.drawflow svg .connection-group-4 {
+  stroke: #1abc9c;
+}
+
+.drawflow svg .connection-group-5 {
+  stroke: #34495e;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  .drawflow svg .connection {
+    stroke: #333;
+  }
+
+  .drawflow svg .connection.connection-selected,
+  .drawflow svg .connection:hover {
+    filter: none;
+    stroke-width: 1;
+  }
+
+  .drawflow .connection-label {
+    box-shadow: none;
+    border: 1px solid #333;
+  }
+}

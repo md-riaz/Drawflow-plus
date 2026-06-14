@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Call Flow Editor - Phase 6 Complete Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --primary-dark: #5a67d8;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --error-color: #f56565;
+            --info-color: #4299e1;
+            --light-bg: #f7fafc;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 280px 1fr 340px;
+            min-height: 85vh;
+            gap: 0;
+        }
+
+        /* ============= HEADER ============= */
+        .app-header {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .app-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--white);
+            color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* ============= TOOLBOX ============= */
+        .toolbox {
+            background: var(--light-bg);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbox-section {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toolbox-header {
+            padding: 16px;
+            background: var(--white);
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toolbox-items {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .node-type-item {
+            padding: 12px;
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            user-select: none;
+        }
+
+        .node-type-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+            border-color: var(--primary-color);
+        }
+
+        .node-type-item:active {
+            cursor: grabbing;
+        }
+
+        .node-type-item.incoming {
+            border-left: 4px solid #10b981;
+            background: #ecfdf5;
+        }
+
+        .node-type-item.ivr {
+            border-left: 4px solid #6366f1;
+            background: #eef2ff;
+        }
+
+        .node-type-item.routing {
+            border-left: 4px solid #f59e0b;
+            background: #fffbeb;
+        }
+
+        .node-type-item.business {
+            border-left: 4px solid #8b5cf6;
+            background: #faf5ff;
+        }
+
+        .node-type-item.media {
+            border-left: 4px solid #06b6d4;
+            background: #ecfdf5;
+        }
+
+        /* ============= CANVAS ============= */
+        .canvas-wrapper {
+            background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 75%, #f8f9fa 75%, #f8f9fa),
+                        linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 75%, #f8f9fa 75%, #f8f9fa);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            background-color: #fafbfc;
+            position: relative;
+            overflow: auto;
+            cursor: crosshair;
+        }
+
+        .canvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-width: 1200px;
+            min-height: 800px;
+        }
+
+        .canvas-node {
+            position: absolute;
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 160px;
+            cursor: move;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            user-select: none;
+        }
+
+        .canvas-node:hover {
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .canvas-node.selected {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow), 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .canvas-node.error {
+            border-color: var(--error-color);
+            background: #fff5f5;
+        }
+
+        .node-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .node-icon {
+            font-size: 20px;
+            width: 32px;
+            text-align: center;
+        }
+
+        .node-title {
+            font-weight: 700;
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .node-type-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--light-bg);
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .node-ports {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            gap: 4px;
+        }
+
+        .node-port {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;;
+            background: var(--border-color);
+            border: 2px solid var(--white);
+            cursor: crosshair;
+            transition: all 0.2s ease;
+        }
+
+        .node-port:hover {
+            transform: scale(1.3);
+            background: var(--primary-color);
+        }
+
+        .node-delete-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            background: var(--error-color);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+
+        .canvas-node:hover .node-delete-btn {
+            opacity: 1;
+        }
+
+        .node-delete-btn:hover {
+            background: #e53e3e;
+            transform: scale(1.1);
+        }
+
+        /* Connection SVG */
+        .connections-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connection-line {
+            fill: none;
+            stroke-width: 2;
+            pointer-events: auto;
+        }
+
+        .connection-line.valid {
+            stroke: var(--success-color);
+        }
+
+        .connection-line.warning {
+            stroke: var(--warning-color);
+        }
+
+        .connection-line.error {
+            stroke: var(--error-color);
+        }
+
+        .connection-line.info {
+            stroke: var(--info-color);
+        }
+
+        .connection-delete-area {
+            cursor: pointer;
+        }
+
+        /* ============= SETTINGS PANEL ============= */
+        .settings-panel {
+            background: var(--light-bg);
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-header {
+            padding: 16px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+        .settings-content {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .settings-empty {
+            text-align: center;
+            color: var(--text-light);
+            padding: 40px 20px;
+            font-size: 13px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+        }
+
+        .validation-message {
+            font-size: 11px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .validation-message.error {
+            background: #fff5f5;
+            color: var(--error-color);
+            border: 1px solid #fed7d7;
+        }
+
+        .validation-message.warning {
+            background: #fffbeb;
+            color: var(--warning-color);
+            border: 1px solid #fef3c7;
+        }
+
+        .validation-message.success {
+            background: #ecfdf5;
+            color: var(--success-color);
+            border: 1px solid #d1fae5;
+        }
+
+        .btn-group-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+
+        .btn-save,
+        .btn-delete {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-save {
+            background: var(--success-color);
+            color: var(--white);
+        }
+
+        .btn-save:hover {
+            background: #38a169;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-delete {
+            background: var(--error-color);
+            color: var(--white);
+        }
+
+        .btn-delete:hover {
+            background: #e53e3e;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ============= MODALS & DIALOGS ============= */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* ============= TABS ============= */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-light);
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ============= RESPONSIVE ============= */
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            .toolbox {
+                grid-column: 1 / -1;
+                max-height: 200px;
+                flex-direction: row;
+            }
+
+            .toolbox-section {
+                border-bottom: none;
+                border-right: 1px solid var(--border-color);
+                flex: 1;
+            }
+
+            .settings-panel {
+                grid-column: 1 / -1;
+                max-height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                min-height: auto;
+            }
+
+            .app-header {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .header-left,
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .canvas-wrapper {
+                min-height: 400px;
+            }
+        }
+
+        /* ============= UTILITIES ============= */
+        .hidden {
+            display: none !important;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 999;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            background: var(--success-color);
+            color: var(--white);
+        }
+
+        .toast.error {
+            background: var(--error-color);
+            color: var(--white);
+        }
+
+        .toast.info {
+            background: var(--info-color);
+            color: var(--white);
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--light-bg);
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="header-left">
+                <div class="app-title">🎯 Advanced Call Flow Editor</div>
+                <div class="status-badge">Phase 6: Complete System</div>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary btn-small" id="btn-export">📤 Export</button>
+                <button class="btn btn-secondary btn-small" id="btn-import">📥 Import</button>
+                <button class="btn btn-secondary btn-small" id="btn-undo" title="Undo">↶</button>
+                <button class="btn btn-secondary btn-small" id="btn-redo" title="Redo">↷</button>
+                <button class="btn btn-secondary btn-small" id="btn-save-version">💾 Save Version</button>
+                <button class="btn btn-primary" id="btn-clear">Clear All</button>
+            </div>
+        </div>
+
+        <!-- Toolbox -->
+        <div class="toolbox">
+            <div class="toolbox-section">
+                <div class="toolbox-header">
+                    📞 Incoming
+                </div>
+                <div class="toolbox-items">
+                    <div class="node-type-item incoming" draggable="true" data-type="incoming-call">
+                        ☎️ Incoming Call
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbox-section">
+                <div class="toolbox-header">
+                    🎙️ Interactive
+                </div>
+                <div class="toolbox-items">
+                    <div class="node-type-item ivr" draggable="true" data-type="ivr">
+                        🎙️ IVR Menu
+                    </div>
+                    <div class="node-type-item media" draggable="true" data-type="play-audio">
+                        🎵 Play Audio
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbox-section">
+                <div class="toolbox-header">
+                    🔀 Routing
+                </div>
+                <div class="toolbox-items">
+                    <div class="node-type-item routing" draggable="true" data-type="extension">
+                        📱 Extension
+                    </div>
+                    <div class="node-type-item routing" draggable="true" data-type="ring-group">
+                        👥 Ring Group
+                    </div>
+                    <div class="node-type-item routing" draggable="true" data-type="voicemail">
+                        📧 Voicemail
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbox-section">
+                <div class="toolbox-header">
+                    📅 Conditions
+                </div>
+                <div class="toolbox-items">
+                    <div class="node-type-item business" draggable="true" data-type="business-hours">
+                        🕐 Business Hours
+                    </div>
+                    <div class="node-type-item business" draggable="true" data-type="holiday">
+                        🎄 Holiday
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-wrapper">
+            <svg class="connections-svg" id="connections-svg"></svg>
+            <div class="canvas" id="canvas"></div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel">
+            <div class="settings-header">⚙️ Node Settings</div>
+            <div class="settings-content" id="settings-content">
+                <div class="settings-empty">Select a node to edit its settings</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="export-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📤 Export Call Flow</div>
+                <button class="modal-close" id="export-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="code-block" id="export-code"></div>
+                <button class="btn btn-primary" id="btn-copy-export" style="width: 100%; margin-top: 16px;">📋 Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📥 Import Call Flow</div>
+                <button class="modal-close" id="import-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">JSON Configuration</label>
+                    <textarea class="form-textarea" id="import-code" placeholder='Paste your call flow JSON here...{"nodes":[],"edges":[]}'></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="import-modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="btn-import-execute">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Version Manager Modal -->
+    <div class="modal-overlay" id="version-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">💾 Saved Versions</div>
+                <button class="modal-close" id="version-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="versions-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // PHASE 6: COMPLETE CALL FLOW EDITOR
+        // Demonstrates all 5 features working together
+        // ============================================================================
+
+        // Configuration
+        const CONFIG = {
+            autoSaveInterval: 3000,
+            nodeWidth: 160,
+            nodeHeight: 120,
+            gridSize: 40,
+            maxHistory: 50,
+        };
+
+        // Node Definitions (Phase 1)
+        const NODE_TYPES = {
+            'incoming-call': {
+                icon: '☎️',
+                label: 'Incoming Call',
+                color: '#10b981',
+                inputs: 0,
+                outputs: 1,
+                config: {
+                    name: { type: 'string', default: 'Incoming Call', required: true },
+                    description: { type: 'string', default: '' },
+                },
+                locked: true,
+            },
+            'ivr': {
+                icon: '🎙️',
+                label: 'IVR Menu',
+                color: '#6366f1',
+                inputs: 1,
+                outputs: 'dynamic',
+                config: {
+                    name: { type: 'string', default: 'IVR Menu', required: true },
+                    prompt: { type: 'string', default: 'Press 1 for sales, 2 for support', required: true },
+                    timeout: { type: 'number', default: 5, min: 1, max: 30 },
+                    maxAttempts: { type: 'number', default: 3, min: 1, max: 10 },
+                    menuOptions: { type: 'array', default: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '*', '#'] },
+                },
+            },
+            'extension': {
+                icon: '📱',
+                label: 'Extension',
+                color: '#f59e0b',
+                inputs: 1,
+                outputs: 2,
+                config: {
+                    name: { type: 'string', default: 'Extension', required: true },
+                    extensionNumber: { type: 'string', default: '101', required: true },
+                    timeout: { type: 'number', default: 30, min: 5, max: 120 },
+                    ringTone: { type: 'string', default: 'default' },
+                },
+            },
+            'ring-group': {
+                icon: '👥',
+                label: 'Ring Group',
+                color: '#f59e0b',
+                inputs: 1,
+                outputs: 2,
+                config: {
+                    name: { type: 'string', default: 'Ring Group', required: true },
+                    extensions: { type: 'array', default: ['101', '102'], required: true },
+                    ringStrategy: { type: 'string', default: 'simultaneous' },
+                    timeout: { type: 'number', default: 30, min: 5, max: 120 },
+                },
+            },
+            'business-hours': {
+                icon: '🕐',
+                label: 'Business Hours',
+                color: '#8b5cf6',
+                inputs: 1,
+                outputs: 2,
+                config: {
+                    name: { type: 'string', default: 'Business Hours', required: true },
+                    timezone: { type: 'string', default: 'UTC' },
+                    startTime: { type: 'string', default: '09:00', required: true },
+                    endTime: { type: 'string', default: '17:00', required: true },
+                    workDays: { type: 'array', default: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] },
+                },
+            },
+            'holiday': {
+                icon: '🎄',
+                label: 'Holiday',
+                color: '#8b5cf6',
+                inputs: 1,
+                outputs: 2,
+                config: {
+                    name: { type: 'string', default: 'Holiday', required: true },
+                    dates: { type: 'array', default: ['2025-12-25'], required: true },
+                    description: { type: 'string', default: 'Closed for holiday' },
+                },
+            },
+            'play-audio': {
+                icon: '🎵',
+                label: 'Play Audio',
+                color: '#06b6d4',
+                inputs: 1,
+                outputs: 1,
+                config: {
+                    name: { type: 'string', default: 'Play Audio', required: true },
+                    audioFile: { type: 'string', default: 'greeting.wav', required: true },
+                    repeatCount: { type: 'number', default: 1, min: 1, max: 5 },
+                },
+            },
+            'voicemail': {
+                icon: '📧',
+                label: 'Voicemail',
+                color: '#f59e0b',
+                inputs: 1,
+                outputs: 1,
+                config: {
+                    name: { type: 'string', default: 'Voicemail', required: true },
+                    mailbox: { type: 'string', default: '100', required: true },
+                    greeting: { type: 'string', default: 'Please leave a message' },
+                    maxDuration: { type: 'number', default: 300, min: 30, max: 600 },
+                },
+            },
+        };
+
+        // State Management (Phase 4)
+        let appState = {
+            nodes: {},
+            edges: [],
+            selectedNode: null,
+            draggingNode: null,
+            history: [],
+            historyIndex: -1,
+            versions: [],
+            validationErrors: {},
+            connectionStates: {},
+        };
+
+        let autoSaveTimer = null;
+        let connectionDrawTimer = null;
+
+        // ============================================================================
+        // UTILITY FUNCTIONS
+        // ============================================================================
+
+        function generateId(prefix = 'node') {
+            return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function saveHistory() {
+            const state = {
+                nodes: JSON.parse(JSON.stringify(appState.nodes)),
+                edges: JSON.parse(JSON.stringify(appState.edges)),
+            };
+            appState.history = appState.history.slice(0, appState.historyIndex + 1);
+            appState.history.push(state);
+            appState.historyIndex++;
+            if (appState.history.length > CONFIG.maxHistory) {
+                appState.history.shift();
+                appState.historyIndex--;
+            }
+        }
+
+        function undo() {
+            if (appState.historyIndex > 0) {
+                appState.historyIndex--;
+                const state = appState.history[appState.historyIndex];
+                appState.nodes = JSON.parse(JSON.stringify(state.nodes));
+                appState.edges = JSON.parse(JSON.stringify(state.edges));
+                renderCanvas();
+                showToast('Undo', 'info');
+            }
+        }
+
+        function redo() {
+            if (appState.historyIndex < appState.history.length - 1) {
+                appState.historyIndex++;
+                const state = appState.history[appState.historyIndex];
+                appState.nodes = JSON.parse(JSON.stringify(state.nodes));
+                appState.edges = JSON.parse(JSON.stringify(state.edges));
+                renderCanvas();
+                showToast('Redo', 'info');
+            }
+        }
+
+        // ============================================================================
+        // VALIDATION (Phase 3)
+        // ============================================================================
+
+        function validateNode(nodeId) {
+            const node = appState.nodes[nodeId];
+            if (!node) return { valid: true, errors: [] };
+
+            const errors = [];
+            const nodeType = NODE_TYPES[node.type];
+
+            // Required fields validation
+            Object.entries(nodeType.config).forEach(([key, field]) => {
+                if (field.required && (!node.config[key] || node.config[key] === '')) {
+                    errors.push(`${key} is required`);
+                }
+            });
+
+            // Type validation
+            Object.entries(node.config).forEach(([key, value]) => {
+                const field = nodeType.config[key];
+                if (!field) return;
+
+                if (field.type === 'number' && typeof value !== 'number') {
+                    errors.push(`${key} must be a number`);
+                } else if (field.min !== undefined && value < field.min) {
+                    errors.push(`${key} must be at least ${field.min}`);
+                } else if (field.max !== undefined && value > field.max) {
+                    errors.push(`${key} must be at most ${field.max}`);
+                }
+            });
+
+            appState.validationErrors[nodeId] = errors;
+            return { valid: errors.length === 0, errors };
+        }
+
+        function validateFlow() {
+            const errors = {};
+            Object.keys(appState.nodes).forEach(nodeId => {
+                const result = validateNode(nodeId);
+                if (!result.valid) {
+                    errors[nodeId] = result.errors;
+                }
+            });
+
+            // Check for orphaned nodes
+            const connectedNodes = new Set();
+            appState.edges.forEach(edge => {
+                connectedNodes.add(edge.from);
+                connectedNodes.add(edge.to);
+            });
+
+            Object.keys(appState.nodes).forEach(nodeId => {
+                if (!connectedNodes.has(nodeId) && NODE_TYPES[appState.nodes[nodeId].type].inputs > 0) {
+                    if (!errors[nodeId]) errors[nodeId] = [];
+                    errors[nodeId].push('Node is not connected to incoming flow');
+                }
+            });
+
+            return errors;
+        }
+
+        // ============================================================================
+        // CONNECTION STYLING (Phase 5)
+        // ============================================================================
+
+        function getConnectionStatus(edge) {
+            const fromNode = appState.nodes[edge.from];
+            const toNode = appState.nodes[edge.to];
+
+            if (!fromNode || !toNode) return 'error';
+            if (appState.validationErrors[edge.from] || appState.validationErrors[edge.to]) return 'warning';
+            return 'valid';
+        }
+
+        function drawConnections() {
+            clearTimeout(connectionDrawTimer);
+            connectionDrawTimer = setTimeout(() => {
+                const svg = document.getElementById('connections-svg');
+                svg.innerHTML = '';
+
+                appState.edges.forEach(edge => {
+                    const fromNode = document.querySelector(`[data-node-id="${edge.from}"]`);
+                    const toNode = document.querySelector(`[data-node-id="${edge.to}"]`);
+
+                    if (!fromNode || !toNode) return;
+
+                    const fromRect = fromNode.getBoundingClientRect();
+                    const toRect = toNode.getBoundingClientRect();
+                    const canvasRect = document.getElementById('canvas').getBoundingClientRect();
+
+                    const x1 = fromRect.left - canvasRect.left + fromRect.width / 2;
+                    const y1 = fromRect.top - canvasRect.top + fromRect.height;
+                    const x2 = toRect.left - canvasRect.left + toRect.width / 2;
+                    const y2 = toRect.top - canvasRect.top;
+
+                    // Draw line
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    const d = `M ${x1} ${y1} C ${x1} ${(y1 + y2) / 2}, ${x2} ${(y1 + y2) / 2}, ${x2} ${y2}`;
+                    line.setAttribute('d', d);
+                    line.setAttribute('stroke', NODE_TYPES[appState.nodes[edge.from].type].color);
+                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('fill', 'none');
+                    line.setAttribute('stroke-linecap', 'round');
+                    line.classList.add('connection-line', getConnectionStatus(edge));
+                    svg.appendChild(line);
+                });
+            }, 50);
+        }
+
+        // ============================================================================
+        // SETTINGS UI (Phase 2)
+        // ============================================================================
+
+        function renderSettings(nodeId) {
+            const node = appState.nodes[nodeId];
+            if (!node) return;
+
+            const nodeType = NODE_TYPES[node.type];
+            const container = document.getElementById('settings-content');
+
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${Object.keys(appState.nodes).length}</div>
+                        <div class="stat-label">Total Nodes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${appState.edges.length}</div>
+                        <div class="stat-label">Connections</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Node ID</label>
+                    <input class="form-input" type="text" value="${nodeId}" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <input class="form-input" type="text" value="${nodeType.label}" disabled>
+                </div>
+            `;
+
+            // Configuration fields
+            Object.entries(nodeType.config).forEach(([key, field]) => {
+                const value = node.config[key] || '';
+                const isArray = field.type === 'array';
+                const inputValue = isArray ? value.join(', ') : value;
+
+                html += `
+                    <div class="form-group">
+                        <label class="form-label">${key}${field.required ? ' *' : ''}</label>
+                        ${field.type === 'number' ?
+                    `<input class="form-input" type="number" data-config="${key}" value="${value}"
+                            ${field.min ? `min="${field.min}"` : ''}
+                            ${field.max ? `max="${field.max}"` : ''}>` :
+                    `<textarea class="form-textarea" data-config="${key}" placeholder="${field.default}">${inputValue}</textarea>`
+                }
+                    </div>
+                `;
+            });
+
+            // Validation feedback
+            const errors = appState.validationErrors[nodeId] || [];
+            if (errors.length > 0) {
+                html += '<div style="border-top: 1px solid var(--border-color); padding-top: 16px;">';
+                errors.forEach(error => {
+                    html += `<div class="validation-message error">⚠️ ${error}</div>`;
+                });
+                html += '</div>';
+            }
+
+            html += `
+                <div class="btn-group-vertical">
+                    <button class="btn-save" id="btn-save-settings">✓ Save Settings</button>
+                    <button class="btn-delete" id="btn-delete-node">✕ Delete Node</button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Event listeners
+            document.getElementById('btn-save-settings').addEventListener('click', () => {
+                const config = {};
+                const nodeType = NODE_TYPES[node.type];
+
+                Object.entries(nodeType.config).forEach(([key, field]) => {
+                    const input = document.querySelector(`[data-config="${key}"]`);
+                    if (input) {
+                        let value = input.value;
+                        if (field.type === 'number') {
+                            value = Number(value);
+                        } else if (field.type === 'array') {
+                            value = value.split(',').map(s => s.trim()).filter(s => s);
+                        }
+                        config[key] = value;
+                    }
+                });
+
+                node.config = config;
+                validateNode(nodeId);
+                renderCanvas();
+                renderSettings(nodeId);
+                autoSaveFlow();
+                showToast('Settings saved', 'success');
+            });
+
+            document.getElementById('btn-delete-node').addEventListener('click', () => {
+                deleteNode(nodeId);
+            });
+        }
+
+        // ============================================================================
+        // NODE MANAGEMENT
+        // ============================================================================
+
+        function createNode(type, x, y) {
+            const nodeType = NODE_TYPES[type];
+            const nodeId = generateId('node');
+
+            const config = {};
+            Object.entries(nodeType.config).forEach(([key, field]) => {
+                config[key] = field.default;
+            });
+
+            appState.nodes[nodeId] = {
+                id: nodeId,
+                type,
+                x: Math.round(x / CONFIG.gridSize) * CONFIG.gridSize,
+                y: Math.round(y / CONFIG.gridSize) * CONFIG.gridSize,
+                config,
+            };
+
+            validateNode(nodeId);
+            saveHistory();
+            renderCanvas();
+            selectNode(nodeId);
+            showToast(`Added ${nodeType.label}`, 'success');
+
+            return nodeId;
+        }
+
+        function deleteNode(nodeId) {
+            if (NODE_TYPES[appState.nodes[nodeId].type].locked) {
+                showToast('Cannot delete locked node', 'warning');
+                return;
+            }
+
+            appState.edges = appState.edges.filter(
+                edge => edge.from !== nodeId && edge.to !== nodeId
+            );
+            delete appState.nodes[nodeId];
+            delete appState.validationErrors[nodeId];
+
+            if (appState.selectedNode === nodeId) {
+                appState.selectedNode = null;
+                document.getElementById('settings-content').innerHTML =
+                    '<div class="settings-empty">Select a node to edit its settings</div>';
+            }
+
+            saveHistory();
+            renderCanvas();
+            showToast('Node deleted', 'info');
+        }
+
+        function selectNode(nodeId) {
+            appState.selectedNode = nodeId;
+            document.querySelectorAll('.canvas-node').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelector(`[data-node-id="${nodeId}"]`)?.classList.add('selected');
+            renderSettings(nodeId);
+        }
+
+        // ============================================================================
+        // CANVAS RENDERING
+        // ============================================================================
+
+        function renderCanvas() {
+            const canvas = document.getElementById('canvas');
+            canvas.innerHTML = '';
+
+            Object.entries(appState.nodes).forEach(([nodeId, node]) => {
+                const nodeType = NODE_TYPES[node.type];
+                const hasErrors = (appState.validationErrors[nodeId] || []).length > 0;
+
+                const nodeEl = document.createElement('div');
+                nodeEl.className = `canvas-node ${hasErrors ? 'error' : ''} ${appState.selectedNode === nodeId ? 'selected' : ''}`;
+                nodeEl.setAttribute('data-node-id', nodeId);
+                nodeEl.style.left = node.x + 'px';
+                nodeEl.style.top = node.y + 'px';
+                nodeEl.style.borderColor = nodeType.color;
+
+                let html = `
+                    <div class="node-header">
+                        <div class="node-icon">${nodeType.icon}</div>
+                        <button class="node-delete-btn" data-node-id="${nodeId}">×</button>
+                    </div>
+                    <div class="node-type-badge">${nodeType.label}</div>
+                    <div class="node-title">${node.config.name || 'Untitled'}</div>
+                    <div class="node-ports">
+                `;
+
+                // Input ports
+                if (nodeType.inputs > 0) {
+                    html += '<div class="node-port" data-port="in" title="Input"></div>';
+                } else {
+                    html += '<div style="flex: 1;"></div>';
+                }
+
+                // Output ports
+                if (nodeType.outputs === 'dynamic') {
+                    const menuOptions = node.config.menuOptions || [];
+                    menuOptions.forEach((opt, i) => {
+                        html += `<div class="node-port" data-port="out-${i}" title="Option ${opt}"></div>`;
+                    });
+                } else if (nodeType.outputs > 0) {
+                    for (let i = 0; i < nodeType.outputs; i++) {
+                        html += `<div class="node-port" data-port="out-${i}" title="Output ${i + 1}"></div>`;
+                    }
+                }
+
+                html += '</div>';
+                nodeEl.innerHTML = html;
+
+                // Drag functionality
+                let isDragging = false;
+                let startX, startY;
+
+                nodeEl.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.node-delete-btn') || e.target.closest('.node-port')) return;
+                    isDragging = true;
+                    startX = e.clientX - node.x;
+                    startY = e.clientY - node.y;
+                    selectNode(nodeId);
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    node.x = Math.round((e.clientX - startX) / CONFIG.gridSize) * CONFIG.gridSize;
+                    node.y = Math.round((e.clientY - startY) / CONFIG.gridSize) * CONFIG.gridSize;
+                    nodeEl.style.left = node.x + 'px';
+                    nodeEl.style.top = node.y + 'px';
+                    drawConnections();
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        saveHistory();
+                        autoSaveFlow();
+                    }
+                });
+
+                // Delete button
+                nodeEl.querySelector('.node-delete-btn').addEventListener('click', () => {
+                    deleteNode(nodeId);
+                });
+
+                // Click to select
+                nodeEl.addEventListener('click', () => {
+                    selectNode(nodeId);
+                });
+
+                canvas.appendChild(nodeEl);
+            });
+
+            drawConnections();
+        }
+
+        // ============================================================================
+        // CONNECTION MANAGEMENT
+        // ============================================================================
+
+        let connectionStartPort = null;
+
+        document.addEventListener('mousedown', (e) => {
+            if (!e.target.closest('.node-port')) return;
+            const nodeEl = e.target.closest('.canvas-node');
+            if (!nodeEl) return;
+
+            const nodeId = nodeEl.getAttribute('data-node-id');
+            const port = e.target.getAttribute('data-port');
+
+            if (port.startsWith('out')) {
+                connectionStartPort = { nodeId, port };
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.id = 'temp-connection-line';
+                line.setAttribute('stroke', NODE_TYPES[appState.nodes[nodeId].type].color);
+                line.setAttribute('stroke-width', '2');
+                document.getElementById('connections-svg').appendChild(line);
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!connectionStartPort) return;
+
+            const svg = document.getElementById('connections-svg');
+            const line = document.getElementById('temp-connection-line');
+            if (!line) return;
+
+            const fromNode = document.querySelector(`[data-node-id="${connectionStartPort.nodeId}"]`);
+            const canvasRect = document.getElementById('canvas').getBoundingClientRect();
+            const fromRect = fromNode.getBoundingClientRect();
+
+            const x1 = fromRect.left - canvasRect.left + fromRect.width / 2;
+            const y1 = fromRect.top - canvasRect.top + fromRect.height;
+            const x2 = e.clientX - canvasRect.left;
+            const y2 = e.clientY - canvasRect.top;
+
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (!connectionStartPort) return;
+
+            if (e.target.closest('.node-port') && e.target.getAttribute('data-port').startsWith('in')) {
+                const toNodeEl = e.target.closest('.canvas-node');
+                const toNodeId = toNodeEl.getAttribute('data-node-id');
+
+                if (toNodeId !== connectionStartPort.nodeId) {
+                    appState.edges.push({
+                        from: connectionStartPort.nodeId,
+                        to: toNodeId,
+                        status: 'valid',
+                    });
+                    saveHistory();
+                    renderCanvas();
+                    showToast('Connection created', 'success');
+                }
+            }
+
+            document.getElementById('temp-connection-line')?.remove();
+            connectionStartPort = null;
+            autoSaveFlow();
+        });
+
+        // ============================================================================
+        // DRAG & DROP FROM TOOLBOX
+        // ============================================================================
+
+        document.querySelectorAll('.node-type-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.effectAllowed = 'copy';
+                e.dataTransfer.setData('type', item.getAttribute('data-type'));
+            });
+        });
+
+        const canvas = document.getElementById('canvas');
+
+        canvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            canvas.style.opacity = '0.8';
+        });
+
+        canvas.addEventListener('dragleave', () => {
+            canvas.style.opacity = '1';
+        });
+
+        canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            canvas.style.opacity = '1';
+
+            const type = e.dataTransfer.getData('type');
+            const canvasRect = canvas.getBoundingClientRect();
+            const x = e.clientX - canvasRect.left;
+            const y = e.clientY - canvasRect.top;
+
+            createNode(type, x, y);
+        });
+
+        // ============================================================================
+        // AUTO-SAVE (Phase 4)
+        // ============================================================================
+
+        function autoSaveFlow() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                localStorage.setItem('callflow_autosave', JSON.stringify({
+                    nodes: appState.nodes,
+                    edges: appState.edges,
+                    timestamp: new Date().toISOString(),
+                }));
+            }, CONFIG.autoSaveInterval);
+        }
+
+        function loadAutoSave() {
+            const saved = localStorage.getItem('callflow_autosave');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    appState.nodes = data.nodes;
+                    appState.edges = data.edges;
+                    appState.history = [{ nodes: appState.nodes, edges: appState.edges }];
+                    appState.historyIndex = 0;
+                    renderCanvas();
+                    showToast('Restored from auto-save', 'info');
+                } catch (e) {
+                    console.error('Failed to load auto-save:', e);
+                }
+            }
+        }
+
+        // ============================================================================
+        // EXPORT/IMPORT
+        // ============================================================================
+
+        function exportFlow() {
+            const data = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                nodes: appState.nodes,
+                edges: appState.edges,
+            };
+            return JSON.stringify(data, null, 2);
+        }
+
+        function importFlow(json) {
+            try {
+                const data = JSON.parse(json);
+                appState.nodes = data.nodes || {};
+                appState.edges = data.edges || [];
+                appState.history = [{ nodes: appState.nodes, edges: appState.edges }];
+                appState.historyIndex = 0;
+                appState.validationErrors = {};
+
+                // Validate all nodes
+                Object.keys(appState.nodes).forEach(nodeId => validateNode(nodeId));
+
+                renderCanvas();
+                showToast('Flow imported successfully', 'success');
+                return true;
+            } catch (e) {
+                showToast('Invalid JSON: ' + e.message, 'error');
+                return false;
+            }
+        }
+
+        // ============================================================================
+        // VERSIONING
+        // ============================================================================
+
+        function saveVersion() {
+            const version = {
+                name: `Version ${appState.versions.length + 1}`,
+                timestamp: new Date().toISOString(),
+                data: {
+                    nodes: JSON.parse(JSON.stringify(appState.nodes)),
+                    edges: JSON.parse(JSON.stringify(appState.edges)),
+                },
+            };
+
+            appState.versions.push(version);
+            localStorage.setItem('callflow_versions', JSON.stringify(appState.versions));
+            showToast(`Saved ${version.name}`, 'success');
+            updateVersionList();
+        }
+
+        function updateVersionList() {
+            const list = document.getElementById('versions-list');
+            if (appState.versions.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--text-light);">No versions saved yet</p>';
+                return;
+            }
+
+            list.innerHTML = appState.versions.map((version, index) => `
+                <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">${version.name}</div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-bottom: 8px;">
+                        ${new Date(version.timestamp).toLocaleString()}
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;" data-version="${index}">Restore</button>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('[data-version]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const version = appState.versions[parseInt(btn.getAttribute('data-version'))];
+                    appState.nodes = JSON.parse(JSON.stringify(version.data.nodes));
+                    appState.edges = JSON.parse(JSON.stringify(version.data.edges));
+                    renderCanvas();
+                    document.getElementById('version-modal').classList.remove('active');
+                    showToast(`Restored ${version.name}`, 'success');
+                });
+            });
+        }
+
+        function loadVersions() {
+            const saved = localStorage.getItem('callflow_versions');
+            if (saved) {
+                try {
+                    appState.versions = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Failed to load versions:', e);
+                }
+            }
+        }
+
+        // ============================================================================
+        // EVENT LISTENERS
+        // ============================================================================
+
+        document.getElementById('btn-export').addEventListener('click', () => {
+            document.getElementById('export-code').textContent = exportFlow();
+            document.getElementById('export-modal').classList.add('active');
+        });
+
+        document.getElementById('export-modal-close').addEventListener('click', () => {
+            document.getElementById('export-modal').classList.remove('active');
+        });
+
+        document.getElementById('btn-copy-export').addEventListener('click', () => {
+            const code = document.getElementById('export-code').textContent;
+            navigator.clipboard.writeText(code);
+            showToast('Copied to clipboard', 'success');
+        });
+
+        document.getElementById('btn-import').addEventListener('click', () => {
+            document.getElementById('import-code').value = '';
+            document.getElementById('import-modal').classList.add('active');
+        });
+
+        document.getElementById('import-modal-close').addEventListener('click', () => {
+            document.getElementById('import-modal').classList.remove('active');
+        });
+
+        document.getElementById('import-modal-cancel').addEventListener('click', () => {
+            document.getElementById('import-modal').classList.remove('active');
+        });
+
+        document.getElementById('btn-import-execute').addEventListener('click', () => {
+            const json = document.getElementById('import-code').value;
+            if (importFlow(json)) {
+                document.getElementById('import-modal').classList.remove('active');
+            }
+        });
+
+        document.getElementById('btn-undo').addEventListener('click', undo);
+        document.getElementById('btn-redo').addEventListener('click', redo);
+
+        document.getElementById('btn-save-version').addEventListener('click', saveVersion);
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            if (confirm('Clear all nodes and connections?')) {
+                appState.nodes = {};
+                appState.edges = [];
+                appState.selectedNode = null;
+                appState.validationErrors = {};
+                saveHistory();
+                renderCanvas();
+                document.getElementById('settings-content').innerHTML =
+                    '<div class="settings-empty">Select a node to edit its settings</div>';
+                showToast('Cleared', 'info');
+            }
+        });
+
+        // Modal close on outside click
+        ['export-modal', 'import-modal', 'version-modal'].forEach(id => {
+            const modal = document.getElementById(id);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+
+        function init() {
+            // Load saved data
+            loadAutoSave();
+            loadVersions();
+            updateVersionList();
+
+            // Initialize with example if empty
+            if (Object.keys(appState.nodes).length === 0) {
+                const incomingId = createNode('incoming-call', 100, 100);
+                const ivrId = createNode('ivr', 100, 250);
+                createNode('extension', 300, 400);
+
+                appState.edges.push({
+                    from: incomingId,
+                    to: ivrId,
+                    status: 'valid',
+                });
+
+                saveHistory();
+                renderCanvas();
+            }
+
+            // Setup periodic auto-save
+            window.addEventListener('beforeunload', autoSaveFlow);
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drawflow-plus Validation Framework Demo</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .demo-section {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .demo-section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 0.95em;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 0.95em;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group.invalid input,
+    .form-group.invalid textarea {
+      border-color: #e74c3c;
+      background-color: #fadbd8;
+    }
+
+    .form-group.valid input,
+    .form-group.valid textarea {
+      border-color: #27ae60;
+      background-color: #d5f4e6;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 0.85em;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .error-message::before {
+      content: '\f071';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+    }
+
+    .success-message {
+      color: #27ae60;
+      font-size: 0.85em;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .success-message::before {
+      content: '\f058';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+    }
+
+    .button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button.secondary {
+      background: #ecf0f1;
+      color: #333;
+      margin-top: 10px;
+    }
+
+    .button.secondary:hover {
+      background: #bdc3c7;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      background: #f8f9fa;
+      display: none;
+    }
+
+    .result.show {
+      display: block;
+    }
+
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .result.valid {
+      background: #d5f4e6;
+      border-left: 4px solid #27ae60;
+    }
+
+    .result.valid .result-title {
+      color: #27ae60;
+    }
+
+    .result.invalid {
+      background: #fadbd8;
+      border-left: 4px solid #e74c3c;
+    }
+
+    .result.invalid .result-title {
+      color: #e74c3c;
+    }
+
+    .error-list {
+      list-style: none;
+      margin-top: 10px;
+    }
+
+    .error-list li {
+      padding: 6px 0;
+      padding-left: 20px;
+      position: relative;
+      color: #555;
+    }
+
+    .error-list li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .examples {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .examples h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .example-card {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+    }
+
+    .example-card:hover {
+      background: #e8f0ff;
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+
+    .example-card h3 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+    }
+
+    .example-card p {
+      color: #666;
+      font-size: 0.9em;
+      line-height: 1.6;
+    }
+
+    .validation-status {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .validation-status.pending {
+      background: #bdc3c7;
+    }
+
+    .validation-status.valid {
+      background: #27ae60;
+    }
+
+    .validation-status.invalid {
+      background: #e74c3c;
+    }
+
+    .rules-info {
+      background: #ecf0f1;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .rules-info strong {
+      color: #333;
+    }
+
+    @media (max-width: 768px) {
+      .demo-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 1.8em;
+      }
+
+      .example-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-check-circle"></i> Validation Framework Demo</h1>
+      <p>Real-time validation for Drawflow-plus call flow builder</p>
+    </div>
+
+    <div class="demo-grid">
+      <!-- Email Validation Demo -->
+      <div class="demo-section">
+        <h2><i class="fas fa-envelope"></i> Email Validation</h2>
+        <form id="emailForm">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              placeholder="user@example.com"
+              data-rule="email"
+              data-rules="required,email"
+            />
+            <div id="email-error" class="error-message" style="display: none;"></div>
+            <div id="email-success" class="success-message" style="display: none;">Valid email address</div>
+          </div>
+          <div class="rules-info">
+            <strong>Rules Applied:</strong>
+            <br>• Required field
+            <br>• Valid email format (user@domain.ext)
+          </div>
+          <button type="submit" class="button">Validate Email</button>
+        </form>
+        <div id="emailResult" class="result"></div>
+      </div>
+
+      <!-- Phone Number Validation Demo -->
+      <div class="demo-section">
+        <h2><i class="fas fa-phone"></i> Phone Number Validation</h2>
+        <form id="phoneForm">
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input
+              type="tel"
+              id="phone"
+              placeholder="+1-234-567-8901"
+              data-rules="required,phoneNumber"
+            />
+            <div id="phone-error" class="error-message" style="display: none;"></div>
+            <div id="phone-success" class="success-message" style="display: none;">Valid phone format</div>
+          </div>
+          <div class="rules-info">
+            <strong>Supported Formats:</strong>
+            <br>• +1-234-567-8901
+            <br>• (234) 567-8901
+            <br>• 234-567-8901
+          </div>
+          <button type="submit" class="button">Validate Phone</button>
+        </form>
+        <div id="phoneResult" class="result"></div>
+      </div>
+
+      <!-- Password Validation Demo -->
+      <div class="demo-section">
+        <h2><i class="fas fa-lock"></i> Password Validation</h2>
+        <form id="passwordForm">
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="Enter password"
+              data-rules="required,minLength:8,maxLength:50"
+            />
+            <div id="password-error" class="error-message" style="display: none;"></div>
+            <div id="password-success" class="success-message" style="display: none;">Valid password</div>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              placeholder="Confirm password"
+              data-rules="required"
+            />
+            <div id="confirmPassword-error" class="error-message" style="display: none;"></div>
+          </div>
+          <div class="rules-info">
+            <strong>Requirements:</strong>
+            <br>• Minimum 8 characters
+            <br>• Maximum 50 characters
+            <br>• Passwords must match
+          </div>
+          <button type="submit" class="button">Validate Password</button>
+        </form>
+        <div id="passwordResult" class="result"></div>
+      </div>
+
+      <!-- URL Validation Demo -->
+      <div class="demo-section">
+        <h2><i class="fas fa-link"></i> URL Validation</h2>
+        <form id="urlForm">
+          <div class="form-group">
+            <label for="url">Website URL</label>
+            <input
+              type="url"
+              id="url"
+              placeholder="https://example.com"
+              data-rules="required,url"
+            />
+            <div id="url-error" class="error-message" style="display: none;"></div>
+            <div id="url-success" class="success-message" style="display: none;">Valid URL</div>
+          </div>
+          <div class="rules-info">
+            <strong>Valid URL Examples:</strong>
+            <br>• https://example.com
+            <br>• http://example.com:8080/path
+            <br>• https://api.service.com/v1
+          </div>
+          <button type="submit" class="button">Validate URL</button>
+        </form>
+        <div id="urlResult" class="result"></div>
+      </div>
+
+      <!-- Name Validation Demo -->
+      <div class="demo-section">
+        <h2><i class="fas fa-user"></i> Name Validation</h2>
+        <form id="nameForm">
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input
+              type="text"
+              id="fullName"
+              placeholder="John Doe"
+              data-rules="required,minLength:2,maxLength:100,pattern:^[a-zA-Z\\s]+$"
+            />
+            <div id="fullName-error" class="error-message" style="display: none;"></div>
+            <div id="fullName-success" class="success-message" style="display: none;">Valid name</div>
+          </div>
+          <div class="rules-info">
+            <strong>Requirements:</strong>
+            <br>• Minimum 2 characters
+            <br>• Maximum 100 characters
+            <br>• Letters and spaces only
+          </div>
+          <button type="submit" class="button">Validate Name</button>
+        </form>
+        <div id="nameResult" class="result"></div>
+      </div>
+
+      <!-- Range Validation Demo -->
+      <div class="demo-section">
+        <h2><i class="fas fa-sliders-h"></i> Range Validation</h2>
+        <form id="rangeForm">
+          <div class="form-group">
+            <label for="age">Age (18-100)</label>
+            <input
+              type="number"
+              id="age"
+              placeholder="25"
+              data-rules="required,numeric,min:18,max:100"
+            />
+            <div id="age-error" class="error-message" style="display: none;"></div>
+            <div id="age-success" class="success-message" style="display: none;">Valid age</div>
+          </div>
+          <div class="form-group">
+            <label for="quantity">Quantity (1-10)</label>
+            <input
+              type="number"
+              id="quantity"
+              placeholder="5"
+              data-rules="required,integer,min:1,max:10"
+            />
+            <div id="quantity-error" class="error-message" style="display: none;"></div>
+            <div id="quantity-success" class="success-message" style="display: none;">Valid quantity</div>
+          </div>
+          <div class="rules-info">
+            <strong>Numeric Validation Rules:</strong>
+            <br>• Required: Must have a value
+            <br>• Numeric: Must be a number
+            <br>• Integer: Must be whole number
+            <br>• Min/Max: Range constraints
+          </div>
+          <button type="submit" class="button">Validate Range</button>
+        </form>
+        <div id="rangeResult" class="result"></div>
+      </div>
+
+      <!-- Multi-field Form Demo -->
+      <div class="demo-section">
+        <h2><i class="fas fa-wpforms"></i> Complete Form Validation</h2>
+        <form id="completeForm">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              placeholder="john_doe"
+              data-rules="required,minLength:3,maxLength:20"
+            />
+            <div id="username-error" class="error-message" style="display: none;"></div>
+            <div id="username-success" class="success-message" style="display: none;">Valid username</div>
+          </div>
+          <div class="form-group">
+            <label for="userEmail">Email</label>
+            <input
+              type="email"
+              id="userEmail"
+              placeholder="john@example.com"
+              data-rules="required,email"
+            />
+            <div id="userEmail-error" class="error-message" style="display: none;"></div>
+            <div id="userEmail-success" class="success-message" style="display: none;">Valid email</div>
+          </div>
+          <div class="form-group">
+            <label for="department">Department</label>
+            <select id="department" data-rules="required">
+              <option value="">-- Select Department --</option>
+              <option value="sales">Sales</option>
+              <option value="support">Support</option>
+              <option value="engineering">Engineering</option>
+            </select>
+            <div id="department-error" class="error-message" style="display: none;"></div>
+            <div id="department-success" class="success-message" style="display: none;">Department selected</div>
+          </div>
+          <div class="rules-info">
+            <strong>Form Rules:</strong>
+            <br>• Username: 3-20 characters
+            <br>• Email: Valid email required
+            <br>• Department: Selection required
+          </div>
+          <button type="submit" class="button">Validate Form</button>
+        </form>
+        <div id="completeResult" class="result"></div>
+      </div>
+    </div>
+
+    <!-- Examples Section -->
+    <div class="examples">
+      <h2><i class="fas fa-lightbulb"></i> Popular Validation Patterns</h2>
+      <div class="example-grid">
+        <div class="example-card" onclick="loadExample('email')">
+          <h3><span class="validation-status pending"></span> Email Verification</h3>
+          <p>Validates email format and suggests common patterns. Perfect for contact forms and user registration.</p>
+        </div>
+        <div class="example-card" onclick="loadExample('phone')">
+          <h3><span class="validation-status pending"></span> Phone Number Format</h3>
+          <p>Supports multiple phone formats globally. Essential for telecommunications and IVR systems.</p>
+        </div>
+        <div class="example-card" onclick="loadExample('password')">
+          <h3><span class="validation-status pending"></span> Strong Password</h3>
+          <p>Enforces password strength with length, complexity, and confirmation matching.</p>
+        </div>
+        <div class="example-card" onclick="loadExample('businessHours')">
+          <h3><span class="validation-status pending"></span> Business Hours</h3>
+          <p>Validates time ranges, timezones, and holiday schedules for call routing.</p>
+        </div>
+        <div class="example-card" onclick="loadExample('extension')">
+          <h3><span class="validation-status pending"></span> Extension Numbers</h3>
+          <p>Validates PBX extension format and directory lookup integration.</p>
+        </div>
+        <div class="example-card" onclick="loadExample('custom')">
+          <h3><span class="validation-status pending"></span> Custom Rules</h3>
+          <p>Create custom validation rules for domain-specific constraints and requirements.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple validation demo (without requiring the full build)
+    const validationRules = {
+      required: (value) => ({
+        valid: value !== null && value !== undefined && value !== '',
+        message: 'This field is required'
+      }),
+      email: (value) => ({
+        valid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+        message: 'Invalid email address'
+      }),
+      phoneNumber: (value) => ({
+        valid: /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(String(value).trim()),
+        message: 'Invalid phone number format'
+      }),
+      url: (value) => {
+        try {
+          new URL(value);
+          return { valid: true };
+        } catch (e) {
+          return { valid: false, message: 'Invalid URL' };
+        }
+      },
+      minLength: (value, len) => ({
+        valid: String(value).length >= len,
+        message: `Must be at least ${len} characters`
+      }),
+      maxLength: (value, len) => ({
+        valid: String(value).length <= len,
+        message: `Must be at most ${len} characters`
+      }),
+      min: (value, num) => ({
+        valid: parseFloat(value) >= num,
+        message: `Value must be at least ${num}`
+      }),
+      max: (value, num) => ({
+        valid: parseFloat(value) <= num,
+        message: `Value must be at most ${num}`
+      }),
+      numeric: (value) => ({
+        valid: !isNaN(value) && value !== '',
+        message: 'Value must be numeric'
+      }),
+      integer: (value) => ({
+        valid: Number.isInteger(Number(value)),
+        message: 'Value must be an integer'
+      }),
+      pattern: (value, pattern) => ({
+        valid: new RegExp(pattern).test(String(value)),
+        message: 'Invalid format'
+      })
+    };
+
+    function parseRules(rulesString) {
+      const rules = [];
+      const parts = rulesString.split(',');
+
+      for (const part of parts) {
+        const [rule, param] = part.split(':');
+        rules.push({ rule: rule.trim(), param });
+      }
+
+      return rules;
+    }
+
+    function validateField(fieldId, rulesString) {
+      const field = document.getElementById(fieldId);
+      const value = field.value;
+      const rules = parseRules(rulesString);
+      const errors = [];
+
+      for (const { rule, param } of rules) {
+        const validator = validationRules[rule];
+        if (validator) {
+          const result = param
+            ? validator(value, param)
+            : validator(value);
+
+          if (!result.valid) {
+            errors.push(result.message);
+          }
+        }
+      }
+
+      return { valid: errors.length === 0, errors };
+    }
+
+    function updateFieldDisplay(fieldId) {
+      const field = document.getElementById(fieldId);
+      const rulesString = field.dataset.rules;
+
+      if (!rulesString) return;
+
+      const { valid, errors } = validateField(fieldId, rulesString);
+      const group = field.parentElement;
+      const errorDiv = document.getElementById(`${fieldId}-error`);
+      const successDiv = document.getElementById(`${fieldId}-success`);
+
+      if (valid) {
+        group.classList.remove('invalid');
+        group.classList.add('valid');
+        if (errorDiv) errorDiv.style.display = 'none';
+        if (successDiv) successDiv.style.display = 'flex';
+      } else {
+        group.classList.remove('valid');
+        group.classList.add('invalid');
+        if (errorDiv) {
+          errorDiv.textContent = errors[0];
+          errorDiv.style.display = 'flex';
+        }
+        if (successDiv) successDiv.style.display = 'none';
+      }
+    }
+
+    // Set up real-time validation
+    document.querySelectorAll('[data-rules]').forEach(field => {
+      field.addEventListener('input', (e) => {
+        updateFieldDisplay(e.target.id);
+      });
+      field.addEventListener('change', (e) => {
+        updateFieldDisplay(e.target.id);
+      });
+    });
+
+    // Form submissions
+    document.getElementById('emailForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const { valid } = validateField('email', 'required,email');
+      const result = document.getElementById('emailResult');
+      result.className = `result show ${valid ? 'valid' : 'invalid'}`;
+      result.innerHTML = `
+        <div class="result-title">
+          <i class="fas ${valid ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+          ${valid ? 'Email is valid!' : 'Email validation failed'}
+        </div>
+      `;
+    });
+
+    document.getElementById('phoneForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const { valid } = validateField('phone', 'required,phoneNumber');
+      const result = document.getElementById('phoneResult');
+      result.className = `result show ${valid ? 'valid' : 'invalid'}`;
+      result.innerHTML = `
+        <div class="result-title">
+          <i class="fas ${valid ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+          ${valid ? 'Phone number is valid!' : 'Phone validation failed'}
+        </div>
+      `;
+    });
+
+    document.getElementById('passwordForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pwd = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const { valid: pwdValid } = validateField('password', 'required,minLength:8,maxLength:50');
+      const { valid: confirmValid } = validateField('confirmPassword', 'required');
+      const passwordsMatch = pwd === confirm && pwd !== '';
+
+      const result = document.getElementById('passwordResult');
+      const valid = pwdValid && confirmValid && passwordsMatch;
+
+      result.className = `result show ${valid ? 'valid' : 'invalid'}`;
+
+      let html = `
+        <div class="result-title">
+          <i class="fas ${valid ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+          ${valid ? 'Password validation passed!' : 'Password validation failed'}
+        </div>
+      `;
+
+      if (!valid) {
+        const errors = [];
+        if (!pwdValid) errors.push('Password does not meet requirements');
+        if (!confirmValid) errors.push('Confirmation password is required');
+        if (!passwordsMatch) errors.push('Passwords do not match');
+
+        html += '<ul class="error-list">' + errors.map(e => `<li>${e}</li>`).join('') + '</ul>';
+      }
+
+      result.innerHTML = html;
+    });
+
+    document.getElementById('urlForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const { valid } = validateField('url', 'required,url');
+      const result = document.getElementById('urlResult');
+      result.className = `result show ${valid ? 'valid' : 'invalid'}`;
+      result.innerHTML = `
+        <div class="result-title">
+          <i class="fas ${valid ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+          ${valid ? 'URL is valid!' : 'URL validation failed'}
+        </div>
+      `;
+    });
+
+    document.getElementById('nameForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const { valid } = validateField('fullName', 'required,minLength:2,maxLength:100,pattern:^[a-zA-Z\\s]+$');
+      const result = document.getElementById('nameResult');
+      result.className = `result show ${valid ? 'valid' : 'invalid'}`;
+      result.innerHTML = `
+        <div class="result-title">
+          <i class="fas ${valid ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+          ${valid ? 'Name is valid!' : 'Name validation failed'}
+        </div>
+      `;
+    });
+
+    document.getElementById('rangeForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const { valid: ageValid } = validateField('age', 'required,numeric,min:18,max:100');
+      const { valid: qtyValid } = validateField('quantity', 'required,integer,min:1,max:10');
+      const valid = ageValid && qtyValid;
+
+      const result = document.getElementById('rangeResult');
+      result.className = `result show ${valid ? 'valid' : 'invalid'}`;
+      result.innerHTML = `
+        <div class="result-title">
+          <i class="fas ${valid ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+          ${valid ? 'All range validations passed!' : 'Range validation failed'}
+        </div>
+      `;
+    });
+
+    document.getElementById('completeForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const { valid: usernameValid } = validateField('username', 'required,minLength:3,maxLength:20');
+      const { valid: emailValid } = validateField('userEmail', 'required,email');
+      const { valid: deptValid } = validateField('department', 'required');
+      const valid = usernameValid && emailValid && deptValid;
+
+      const result = document.getElementById('completeResult');
+      result.className = `result show ${valid ? 'valid' : 'invalid'}`;
+
+      let html = `
+        <div class="result-title">
+          <i class="fas ${valid ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+          ${valid ? 'Form is complete and valid!' : 'Form has validation errors'}
+        </div>
+      `;
+
+      if (!valid) {
+        const errors = [];
+        if (!usernameValid) errors.push('Username must be 3-20 characters');
+        if (!emailValid) errors.push('Valid email address required');
+        if (!deptValid) errors.push('Please select a department');
+
+        html += '<ul class="error-list">' + errors.map(e => `<li>${e}</li>`).join('') + '</ul>';
+      }
+
+      result.innerHTML = html;
+    });
+
+    function loadExample(example) {
+      alert(`Example: ${example.toUpperCase()}\n\nThis would load a detailed example of ${example} validation in a real implementation using the Drawflow-plus validation framework.`);
+    }
+  </script>
+</body>
+</html>
