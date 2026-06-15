@@ -117,6 +117,23 @@ describe('AutoSave', () => {
       expect(saveFn).toHaveBeenCalledTimes(1);
     });
 
+    test('same-label gates are reference-counted', async () => {
+      const saveFn = jest.fn().mockResolvedValue(null);
+      const dfp = makeMockDfp();
+      const as = new AutoSave({ saveFn, delay: 100 });
+      as.install(dfp, {});
+      const close1 = dfp.openSaveGate('batch');
+      const close2 = dfp.openSaveGate('batch');
+      dfp.scheduleSave();
+      jest.advanceTimersByTime(500);
+      close1();
+      await Promise.resolve();
+      expect(saveFn).not.toHaveBeenCalled(); // second ref still open
+      close2();
+      await Promise.resolve();
+      expect(saveFn).toHaveBeenCalledTimes(1);
+    });
+
     test('multiple gates: last close triggers save', async () => {
       const saveFn = jest.fn().mockResolvedValue(null);
       const dfp = makeMockDfp();
@@ -157,6 +174,29 @@ describe('AutoSave', () => {
       expect(saveFn).toHaveBeenCalledTimes(3);
       expect(spy).toHaveBeenCalledWith('full', true, null);
       jest.useFakeTimers();
+    });
+  });
+
+  describe('flush', () => {
+    test('flush triggers timer-scheduled save immediately', async () => {
+      const saveFn = jest.fn().mockResolvedValue(null);
+      const dfp = makeMockDfp();
+      const as = new AutoSave({ saveFn, delay: 5000 });
+      as.install(dfp, {});
+      dfp.scheduleSave('full');
+      dfp.flushSave();
+      await Promise.resolve();
+      expect(saveFn).toHaveBeenCalledTimes(1);
+    });
+
+    test('flush is a no-op when nothing is pending', async () => {
+      const saveFn = jest.fn().mockResolvedValue(null);
+      const dfp = makeMockDfp();
+      const as = new AutoSave({ saveFn, delay: 100 });
+      as.install(dfp, {});
+      dfp.flushSave();
+      await Promise.resolve();
+      expect(saveFn).not.toHaveBeenCalled();
     });
   });
 

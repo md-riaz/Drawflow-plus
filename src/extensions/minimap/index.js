@@ -91,7 +91,10 @@ class Minimap {
     ctx.clearRect(0, 0, width, height);
 
     const bounds = this._computeBounds();
-    if (!bounds) return;
+    if (!bounds) {
+      this._renderBounds = null;
+      return;
+    }
 
     const { minX, minY, maxX, maxY } = bounds;
     const flowW = maxX - minX || 1;

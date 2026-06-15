@@ -12,6 +12,7 @@ const DEFAULTS = {
 
 class ConnectionRules {
   constructor(options = {}) {
+    this._postAdd = false;
     this._outputMaxByType = new Map();
     this._inputMaxByType = new Map();
     this._outputMaxByNode = new Map();
@@ -138,13 +139,23 @@ class ConnectionRules {
         const connections = output.connections || [];
         const max = this._resolveOutputMax(nodeId, outputKey);
         if (max !== null && connections.length > max) {
-          violations.push({
-            nodeId,
-            port: outputKey,
-            type: 'outputMax',
-            count: connections.length,
-            max,
-          });
+          violations.push({ nodeId, port: outputKey, type: 'outputMax', count: connections.length, max });
+        }
+        for (const conn of connections) {
+          const toNodeId = String(conn.node);
+          const typeCheck = this._checkTypeRule(nodeId, toNodeId);
+          if (!typeCheck.allowed) {
+            violations.push({ nodeId, port: outputKey, targetNodeId: toNodeId, type: 'typeRule', reason: typeCheck.reason });
+          }
+        }
+      }
+
+      const inputs = node.inputs || {};
+      for (const [inputKey, input] of Object.entries(inputs)) {
+        const connections = input.connections || [];
+        const max = this._resolveInputMax(nodeId, inputKey);
+        if (max !== null && connections.length > max) {
+          violations.push({ nodeId, port: inputKey, type: 'inputMax', count: connections.length, max });
         }
       }
     }
@@ -164,10 +175,12 @@ class ConnectionRules {
     if (!df || typeof df.on !== 'function') return;
 
     df.on('connectionCreated', (info) => {
+      this._postAdd = true;
       const result = this.canConnect(
         info.output_id, info.output_class,
         info.input_id, info.input_class
       );
+      this._postAdd = false;
 
       if (!result.allowed && this.options.strict) {
         this._removeConnection(info);
@@ -234,7 +247,8 @@ class ConnectionRules {
     if (max === null) return { allowed: true, reason: null };
 
     const current = this._countOutputConnections(nodeId, outputKey);
-    if (current >= max) {
+    // postAdd: DrawFlow already added the connection, so current includes the new one
+    if (this._postAdd ? current > max : current >= max) {
       return {
         allowed: false,
         reason: `Output "${outputKey}" on node ${nodeId} already has ${current}/${max} connections`,
@@ -248,7 +262,7 @@ class ConnectionRules {
     if (max === null) return { allowed: true, reason: null };
 
     const current = this._countInputConnections(nodeId, inputKey);
-    if (current >= max) {
+    if (this._postAdd ? current > max : current >= max) {
       return {
         allowed: false,
         reason: `Input "${inputKey}" on node ${nodeId} already has ${current}/${max} connections`,

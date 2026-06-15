@@ -209,7 +209,8 @@ describe('ConnectionRules', () => {
       rules.install(dfp, {});
       dfp.setOutputMaxConnections('ivr', 'output_1', 1);
 
-      // Simulate DrawFlow firing connectionCreated
+      // Simulate DrawFlow having added the new connection to its data before firing the event
+      nodes[1].outputs.output_1.connections.push({ node: 3, output: 'input_1' });
       dfp.drawflow._triggerConnectionCreated({
         output_id: 1, output_class: 'output_1',
         input_id: 3, input_class: 'input_1',
@@ -227,6 +228,7 @@ describe('ConnectionRules', () => {
       rules.install(dfp, {});
       dfp.setOutputMaxConnections('ivr', 'output_1', 1);
 
+      nodes[1].outputs.output_1.connections.push({ node: 3, output: 'input_1' });
       dfp.drawflow._triggerConnectionCreated({
         output_id: 1, output_class: 'output_1',
         input_id: 3, input_class: 'input_1',

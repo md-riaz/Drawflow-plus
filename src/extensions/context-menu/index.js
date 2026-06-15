@@ -127,7 +127,11 @@ class NodeContextMenu {
 
       const el = document.createElement('div');
       el.className = `dfp-context-menu-item${item.danger ? ' danger' : ''}`;
-      if (item.icon) el.innerHTML = `<span>${item.icon}</span>`;
+      if (item.icon !== undefined && item.icon !== null) {
+        const iconEl = document.createElement('span');
+        iconEl.textContent = String(item.icon);
+        el.appendChild(iconEl);
+      }
       const label = document.createElement('span');
       label.textContent = item.label;
       el.appendChild(label);

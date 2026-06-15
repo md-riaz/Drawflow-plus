@@ -79,10 +79,10 @@ describe('GridBackground', () => {
     });
 
     test('injects a style element into document.head', () => {
+      const beforeCount = document.head.querySelectorAll('style').length;
       const dfp = makeMockDfp();
       installGrid(dfp);
-      const styleEls = document.head.querySelectorAll('style');
-      expect(styleEls.length).toBeGreaterThan(0);
+      expect(document.head.querySelectorAll('style').length).toBe(beforeCount + 1);
     });
   });
 

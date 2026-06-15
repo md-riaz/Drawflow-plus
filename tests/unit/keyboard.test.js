@@ -60,9 +60,8 @@ describe('KeyboardShortcuts', () => {
     });
 
     test('loads default bindings', () => {
-      const kb = new KeyboardShortcuts();
       const dfp = makeMockDfp();
-      kb.install(dfp, {});
+      const kb = installKb(dfp);
       expect(kb._bindings.get('ctrl+z')).toBe('undo');
       expect(kb._bindings.get('delete')).toBe('delete');
       expect(kb._bindings.get('ctrl+a')).toBe('selectAll');
@@ -294,9 +293,8 @@ describe('KeyboardShortcuts', () => {
 
   describe('_normalizeKey', () => {
     test('produces correct key string for modifier combos', () => {
-      const kb = new KeyboardShortcuts();
       const dfp = makeMockDfp();
-      kb.install(dfp, {});
+      const kb = installKb(dfp);
 
       const makeEvent = (key, mods) => ({
         key,

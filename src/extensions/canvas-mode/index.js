@@ -26,7 +26,7 @@ const DEFAULTS = {
 
 class CanvasMode {
   constructor(options = {}) {
-    this._mode = 'edit';
+    this._mode = null;
     this._listeners = new Set();
     this.options = { ...DEFAULTS, ...options };
   }
@@ -104,7 +104,7 @@ class CanvasMode {
 
   withMode(mode, fn) {
     const previous = this._mode;
-    this.setMode(mode);
+    if (!this.setMode(mode)) return false;
     try {
       const result = fn();
       if (result && typeof result.then === 'function') {

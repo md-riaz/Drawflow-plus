@@ -15,6 +15,7 @@ const DEFAULT_BINDINGS = {
   'ctrl+d': 'duplicate',
   'escape': 'deselect',
   '+': 'zoomIn',
+  'shift+=': 'zoomIn',
   '=': 'zoomIn',
   '-': 'zoomOut',
   '0': 'fitToScreen',

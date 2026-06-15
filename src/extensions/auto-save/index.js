@@ -82,16 +82,18 @@ class AutoSave {
   }
 
   flush() {
+    const hadFull = !!this._fullTimer || this._pendingFull;
+    const hadPosition = !!this._positionTimer || this._pendingPosition;
+
     clearTimeout(this._fullTimer);
     clearTimeout(this._positionTimer);
     this._fullTimer = null;
     this._positionTimer = null;
+    this._pendingFull = false;
+    this._pendingPosition = false;
 
-    if (this._pendingFull || this._pendingPosition) {
-      const type = this._pendingFull ? 'full' : 'position';
-      this._pendingFull = false;
-      this._pendingPosition = false;
-      this._runSave(type);
+    if (hadFull || hadPosition) {
+      this._runSave(hadFull ? 'full' : 'position');
     }
   }
 
@@ -125,9 +127,14 @@ class AutoSave {
 
   openGate(label) {
     const key = label || Symbol('gate');
-    this._gates.set(key, true);
+    this._gates.set(key, (this._gates.get(key) || 0) + 1);
+    let closed = false;
     return () => {
-      this._gates.delete(key);
+      if (closed) return;
+      closed = true;
+      const count = this._gates.get(key) || 0;
+      if (count <= 1) this._gates.delete(key);
+      else this._gates.set(key, count - 1);
       if (this._gates.size === 0 && (this._pendingFull || this._pendingPosition)) {
         const type = this._pendingFull ? 'full' : 'position';
         this._pendingFull = false;

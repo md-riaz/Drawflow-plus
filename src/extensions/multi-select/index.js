@@ -246,6 +246,7 @@ class MultiSelect {
 
     this._isDraggingBox = true;
     const wrapper = this._getWrapper();
+    if (!wrapper) return;
     const rect = wrapper.getBoundingClientRect();
     this._boxStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 

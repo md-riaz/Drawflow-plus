@@ -172,7 +172,9 @@ class ViewportManager {
     return { zoom: df.zoom || 1, x: df.canvas_x || 0, y: df.canvas_y || 0 };
   }
 
-  setViewport({ zoom, x, y }) {
+  setViewport(viewport = {}) {
+    if (!viewport || typeof viewport !== 'object') return;
+    const { zoom, x, y } = viewport;
     const df = this.dfp.drawflow;
     if (!df) return;
     if (zoom !== undefined) df.zoom = Math.max(this.options.zoomMin, Math.min(this.options.zoomMax, zoom));

@@ -46,7 +46,9 @@ class GridBackground {
   }
 
   setSize(size) {
-    this.options.gridSize = size;
+    const parsed = Number(size);
+    if (!Number.isFinite(parsed) || parsed <= 0) return;
+    this.options.gridSize = parsed;
     this._rebuildStyles();
     const df = this.dfp.drawflow;
     if (df) this._update(df.canvas_x || 0, df.canvas_y || 0, df.zoom || 1);

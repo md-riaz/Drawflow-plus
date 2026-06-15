@@ -1,6 +1,6 @@
-var A = Object.defineProperty;
-var V = (c, t, e) => t in c ? A(c, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : c[t] = e;
-var $ = (c, t, e) => V(c, typeof t != "symbol" ? t + "" : t, e);
+var O = Object.defineProperty;
+var V = (c, t, e) => t in c ? O(c, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : c[t] = e;
+var N = (c, t, e) => V(c, typeof t != "symbol" ? t + "" : t, e);
 class dt {
   /**
    * Constructor
@@ -1602,22 +1602,22 @@ class j {
 function W() {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
-function b(c) {
+function v(c) {
   if (c === null || typeof c != "object")
     return c;
   if (c instanceof Date)
     return new Date(c.getTime());
   if (c instanceof Array)
-    return c.map((t) => b(t));
+    return c.map((t) => v(t));
   if (c instanceof Object) {
     const t = {};
     for (const e in c)
-      Object.prototype.hasOwnProperty.call(c, e) && (t[e] = b(c[e]));
+      Object.prototype.hasOwnProperty.call(c, e) && (t[e] = v(c[e]));
     return t;
   }
 }
 function T(c, t) {
-  const e = b(c);
+  const e = v(c);
   for (const s in t)
     Object.prototype.hasOwnProperty.call(t, s) && (t[s] && typeof t[s] == "object" && !Array.isArray(t[s]) ? e[s] = T(e[s] || {}, t[s]) : e[s] = t[s]);
   return e;
@@ -1633,17 +1633,17 @@ function X(c, t) {
     }, t);
   };
 }
-function U(c, t) {
+function K(c, t) {
   let e = 0;
   return function(...n) {
     const i = Date.now();
     i - e >= t && (c.apply(this, n), e = i);
   };
 }
-function q(c) {
+function U(c) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c);
 }
-function K(c) {
+function q(c) {
   try {
     return new URL(c), !0;
   } catch {
@@ -1653,13 +1653,13 @@ function K(c) {
 const _t = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   debounce: X,
-  deepClone: b,
+  deepClone: v,
   deepMerge: T,
   generateId: W,
   isEmpty: Y,
-  isValidEmail: q,
-  isValidUrl: K,
-  throttle: U
+  isValidEmail: U,
+  isValidUrl: q,
+  throttle: K
 }, Symbol.toStringTag, { value: "Module" })), H = {
   zoomMin: 0.1,
   zoomMax: 2.5,
@@ -1736,9 +1736,10 @@ class mt {
     const t = this.dfp.drawflow;
     return t ? { zoom: t.zoom || 1, x: t.canvas_x || 0, y: t.canvas_y || 0 } : { zoom: 1, x: 0, y: 0 };
   }
-  setViewport({ zoom: t, x: e, y: s }) {
-    const n = this.dfp.drawflow;
-    n && (t !== void 0 && (n.zoom = Math.max(this.options.zoomMin, Math.min(this.options.zoomMax, t))), e !== void 0 && (n.canvas_x = e), s !== void 0 && (n.canvas_y = s), this._applyTransform("restore"));
+  setViewport(t = {}) {
+    if (!t || typeof t != "object") return;
+    const { zoom: e, x: s, y: n } = t, i = this.dfp.drawflow;
+    i && (e !== void 0 && (i.zoom = Math.max(this.options.zoomMin, Math.min(this.options.zoomMax, e))), s !== void 0 && (i.canvas_x = s), n !== void 0 && (i.canvas_y = n), this._applyTransform("restore"));
   }
   onViewportChange(t) {
     return this._subscribers.add(t), () => this._subscribers.delete(t);
@@ -1808,7 +1809,7 @@ const Z = {
 };
 class gt {
   constructor(t = {}) {
-    this._outputMaxByType = /* @__PURE__ */ new Map(), this._inputMaxByType = /* @__PURE__ */ new Map(), this._outputMaxByNode = /* @__PURE__ */ new Map(), this._inputMaxByNode = /* @__PURE__ */ new Map(), this._typeRules = /* @__PURE__ */ new Map(), this._canConnectFns = [], this._violations = [], this.options = { ...Z, ...t };
+    this._postAdd = !1, this._outputMaxByType = /* @__PURE__ */ new Map(), this._inputMaxByType = /* @__PURE__ */ new Map(), this._outputMaxByNode = /* @__PURE__ */ new Map(), this._inputMaxByNode = /* @__PURE__ */ new Map(), this._typeRules = /* @__PURE__ */ new Map(), this._canConnectFns = [], this._violations = [], this.options = { ...Z, ...t };
   }
   install(t, e = {}) {
     this.dfp = t, this.options = { ...this.options, ...e }, t.setOutputMaxConnections = (s, n, i) => this.setOutputMaxConnections(s, n, i), t.setInputMaxConnections = (s, n, i) => this.setInputMaxConnections(s, n, i), t.setOutputMaxConnectionsForNode = (s, n, i) => this.setOutputMaxConnectionsForNode(s, n, i), t.setInputMaxConnectionsForNode = (s, n, i) => this.setInputMaxConnectionsForNode(s, n, i), t.addTypeRule = (s, n, i) => this.addTypeRule(s, n, i), t.setTypeMatrix = (s) => this.setTypeMatrix(s), t.setCanConnect = (s) => this.setCanConnect(s), t.clearConnectionRules = () => this.clearRules(), t.canConnect = (s, n, i, o) => this.canConnect(s, n, i, o), t.validateFlow = () => this.validateFlow(), t.getConnectionViolations = () => this.getViolations(), this._hookDrawflow();
@@ -1866,15 +1867,18 @@ class gt {
     const t = this._getNodes(), e = [];
     for (const [s, n] of Object.entries(t)) {
       const i = n.outputs || {};
-      for (const [o, r] of Object.entries(i)) {
-        const a = r.connections || [], l = this._resolveOutputMax(s, o);
-        l !== null && a.length > l && e.push({
-          nodeId: s,
-          port: o,
-          type: "outputMax",
-          count: a.length,
-          max: l
-        });
+      for (const [r, a] of Object.entries(i)) {
+        const l = a.connections || [], d = this._resolveOutputMax(s, r);
+        d !== null && l.length > d && e.push({ nodeId: s, port: r, type: "outputMax", count: l.length, max: d });
+        for (const h of l) {
+          const p = String(h.node), u = this._checkTypeRule(s, p);
+          u.allowed || e.push({ nodeId: s, port: r, targetNodeId: p, type: "typeRule", reason: u.reason });
+        }
+      }
+      const o = n.inputs || {};
+      for (const [r, a] of Object.entries(o)) {
+        const l = a.connections || [], d = this._resolveInputMax(s, r);
+        d !== null && l.length > d && e.push({ nodeId: s, port: r, type: "inputMax", count: l.length, max: d });
       }
     }
     return this._violations = e, e;
@@ -1886,13 +1890,14 @@ class gt {
   _hookDrawflow() {
     const t = this.dfp.drawflow;
     !t || typeof t.on != "function" || t.on("connectionCreated", (e) => {
+      this._postAdd = !0;
       const s = this.canConnect(
         e.output_id,
         e.output_class,
         e.input_id,
         e.input_class
       );
-      if (!s.allowed && this.options.strict) {
+      if (this._postAdd = !1, !s.allowed && this.options.strict) {
         this._removeConnection(e);
         const n = { ...e, reason: s.reason };
         this._violations.push(n), typeof this.options.onViolation == "function" && this.options.onViolation(n);
@@ -1934,7 +1939,7 @@ class gt {
     const s = this._resolveOutputMax(t, e);
     if (s === null) return { allowed: !0, reason: null };
     const n = this._countOutputConnections(t, e);
-    return n >= s ? {
+    return (this._postAdd ? n > s : n >= s) ? {
       allowed: !1,
       reason: `Output "${e}" on node ${t} already has ${n}/${s} connections`
     } : { allowed: !0, reason: null };
@@ -1943,7 +1948,7 @@ class gt {
     const s = this._resolveInputMax(t, e);
     if (s === null) return { allowed: !0, reason: null };
     const n = this._countInputConnections(t, e);
-    return n >= s ? {
+    return (this._postAdd ? n > s : n >= s) ? {
       allowed: !1,
       reason: `Input "${e}" on node ${t} already has ${n}/${s} connections`
     } : { allowed: !0, reason: null };
@@ -2017,7 +2022,7 @@ class gt {
     }
   }
 }
-const N = ["edit", "readonly", "preview", "locked"], J = {
+const $ = ["edit", "readonly", "preview", "locked"], J = {
   edit: "edit",
   readonly: "view",
   preview: "view",
@@ -2028,13 +2033,13 @@ const N = ["edit", "readonly", "preview", "locked"], J = {
 };
 class yt {
   constructor(t = {}) {
-    this._mode = "edit", this._listeners = /* @__PURE__ */ new Set(), this.options = { ...Q, ...t };
+    this._mode = null, this._listeners = /* @__PURE__ */ new Set(), this.options = { ...Q, ...t };
   }
   install(t, e = {}) {
     this.dfp = t, this.options = { ...this.options, ...e }, t.setMode = (s) => this.setMode(s), t.getMode = () => this.getMode(), t.isEditable = () => this.isEditable(), t.isPanEnabled = () => this.isPanEnabled(), t.isZoomEnabled = () => this.isZoomEnabled(), t.isMode = (s) => this.is(s), t.onModeChange = (s) => this.onModeChange(s), t.guardMode = (s, n) => this.guard(s, n), t.withMode = (s, n) => this.withMode(s, n), this.setMode(this.options.initialMode || "edit");
   }
   setMode(t) {
-    if (!N.includes(t)) return !1;
+    if (!$.includes(t)) return !1;
     if (t === this._mode) return !0;
     const e = this._mode;
     this._mode = t;
@@ -2061,7 +2066,7 @@ class yt {
   }
   withMode(t, e) {
     const s = this._mode;
-    this.setMode(t);
+    if (!this.setMode(t)) return !1;
     try {
       const n = e();
       return n && typeof n.then == "function" ? n.finally(() => this.setMode(s)) : (this.setMode(s), n);
@@ -2075,7 +2080,7 @@ class yt {
   // --- private ---
   _updateContainerClass(t) {
     const e = this.dfp.drawflow, s = e && e.precanvas ? e.precanvas.parentElement : null;
-    s && (N.forEach((n) => s.classList.remove(`dfp-mode-${n}`)), s.classList.add(`dfp-mode-${t}`));
+    s && ($.forEach((n) => s.classList.remove(`dfp-mode-${n}`)), s.classList.add(`dfp-mode-${t}`));
   }
   _notifyAutoSave(t, e) {
     const s = this.dfp.getExtension("autoSave");
@@ -2103,9 +2108,9 @@ const P = {
   outline-offset: 2px;
 }
 `;
-class vt {
+class bt {
   constructor(t = {}) {
-    $(this, "_isBoxSelecting", !1);
+    N(this, "_isBoxSelecting", !1);
     this._selected = /* @__PURE__ */ new Set(), this._subscribers = /* @__PURE__ */ new Set(), this._boxEl = null, this._boxStart = null, this._isDraggingBox = !1, this._groupDragData = null, this._styleEl = null, this.options = { ...P, ...t }, this._onPointerDown = this._onPointerDown.bind(this), this._onPointerMove = this._onPointerMove.bind(this), this._onPointerUp = this._onPointerUp.bind(this), this._onKeyDown = this._onKeyDown.bind(this), this._onNodeMoved = this._onNodeMoved.bind(this);
   }
   install(t, e = {}) {
@@ -2234,7 +2239,9 @@ class vt {
     const e = this._checkModifier(t);
     if (!(t.target === this._getWrapper() || t.target === ((o = this.dfp.drawflow) == null ? void 0 : o.precanvas)) || !e) return;
     this._isDraggingBox = !0;
-    const n = this._getWrapper(), i = n.getBoundingClientRect();
+    const n = this._getWrapper();
+    if (!n) return;
+    const i = n.getBoundingClientRect();
     this._boxStart = { x: t.clientX - i.left, y: t.clientY - i.top }, this._boxEl = document.createElement("div"), this._boxEl.className = "dfp-select-box", this._boxEl.style.left = `${this._boxStart.x}px`, this._boxEl.style.top = `${this._boxStart.y}px`, this._boxEl.style.width = "0px", this._boxEl.style.height = "0px", n.appendChild(this._boxEl), window.addEventListener("pointermove", this._onPointerMove), window.addEventListener("pointerup", this._onPointerUp), t.preventDefault();
   }
   _onPointerMove(t) {
@@ -2312,7 +2319,7 @@ const et = {
   onSaveStart: null,
   onSaveEnd: null
 };
-class bt {
+class vt {
   constructor(t = {}) {
     this._fullTimer = null, this._positionTimer = null, this._pendingFull = !1, this._pendingPosition = !1, this._holdUntil = 0, this._holdIndefinite = !1, this._gates = /* @__PURE__ */ new Map(), this._status = "idle", this._listeners = /* @__PURE__ */ new Set(), this.options = { ...et, ...t };
   }
@@ -2333,10 +2340,8 @@ class bt {
     }, this.options.delay));
   }
   flush() {
-    if (clearTimeout(this._fullTimer), clearTimeout(this._positionTimer), this._fullTimer = null, this._positionTimer = null, this._pendingFull || this._pendingPosition) {
-      const t = this._pendingFull ? "full" : "position";
-      this._pendingFull = !1, this._pendingPosition = !1, this._runSave(t);
-    }
+    const t = !!this._fullTimer || this._pendingFull, e = !!this._positionTimer || this._pendingPosition;
+    clearTimeout(this._fullTimer), clearTimeout(this._positionTimer), this._fullTimer = null, this._positionTimer = null, this._pendingFull = !1, this._pendingPosition = !1, (t || e) && this._runSave(t ? "full" : "position");
   }
   hold(t) {
     t === void 0 || t === 0 ? this._holdIndefinite = !0 : this._holdUntil = Math.max(this._holdUntil, Date.now() + t);
@@ -2352,10 +2357,15 @@ class bt {
   }
   openGate(t) {
     const e = t || Symbol("gate");
-    return this._gates.set(e, !0), () => {
-      if (this._gates.delete(e), this._gates.size === 0 && (this._pendingFull || this._pendingPosition)) {
-        const s = this._pendingFull ? "full" : "position";
-        this._pendingFull = !1, this._pendingPosition = !1, this._runSave(s);
+    this._gates.set(e, (this._gates.get(e) || 0) + 1);
+    let s = !1;
+    return () => {
+      if (s) return;
+      s = !0;
+      const n = this._gates.get(e) || 0;
+      if (n <= 1 ? this._gates.delete(e) : this._gates.set(e, n - 1), this._gates.size === 0 && (this._pendingFull || this._pendingPosition)) {
+        const i = this._pendingFull ? "full" : "position";
+        this._pendingFull = !1, this._pendingPosition = !1, this._runSave(i);
       }
     };
   }
@@ -2454,9 +2464,11 @@ class xt {
     this.options.style = t, this._rebuildStyles();
   }
   setSize(t) {
-    this.options.gridSize = t, this._rebuildStyles();
-    const e = this.dfp.drawflow;
-    e && this._update(e.canvas_x || 0, e.canvas_y || 0, e.zoom || 1);
+    const e = Number(t);
+    if (!Number.isFinite(e) || e <= 0) return;
+    this.options.gridSize = e, this._rebuildStyles();
+    const s = this.dfp.drawflow;
+    s && this._update(s.canvas_x || 0, s.canvas_y || 0, s.zoom || 1);
   }
   toggle(t) {
     const e = this._getWrapper();
@@ -2592,7 +2604,10 @@ class St {
         continue;
       }
       const h = document.createElement("div");
-      h.className = `dfp-context-menu-item${d.danger ? " danger" : ""}`, d.icon && (h.innerHTML = `<span>${d.icon}</span>`);
+      if (h.className = `dfp-context-menu-item${d.danger ? " danger" : ""}`, d.icon !== void 0 && d.icon !== null) {
+        const u = document.createElement("span");
+        u.textContent = String(d.icon), h.appendChild(u);
+      }
       const p = document.createElement("span");
       p.textContent = d.label, h.appendChild(p), h.addEventListener("click", (u) => {
         u.stopPropagation(), this._close(), d.action(s, this.dfp);
@@ -2675,6 +2690,7 @@ const ot = {
   "ctrl+d": "duplicate",
   escape: "deselect",
   "+": "zoomIn",
+  "shift+=": "zoomIn",
   "=": "zoomIn",
   "-": "zoomOut",
   0: "fitToScreen"
@@ -2832,18 +2848,21 @@ class wt {
     const { width: e, height: s } = this.options;
     t.clearRect(0, 0, e, s);
     const n = this._computeBounds();
-    if (!n) return;
+    if (!n) {
+      this._renderBounds = null;
+      return;
+    }
     const { minX: i, minY: o, maxX: r, maxY: a } = n, l = r - i || 1, d = a - o || 1, h = (e - 16) / l, p = (s - 16) / d, u = Math.min(h, p), f = 8 + (e - 16 - l * u) / 2, _ = 8 + (s - 16 - d * u) / 2, D = this._getNodes();
     t.fillStyle = this.options.nodeColor;
-    for (const [y, v] of Object.entries(D)) {
-      const x = f + (v.pos_x - i) * u, g = _ + (v.pos_y - o) * u, S = Math.max(4, 240 * u), E = Math.max(3, 80 * u);
+    for (const [y, b] of Object.entries(D)) {
+      const x = f + (b.pos_x - i) * u, g = _ + (b.pos_y - o) * u, S = Math.max(4, 240 * u), E = Math.max(3, 80 * u);
       t.fillRect(x, g, S, E);
     }
     const m = this.dfp.drawflow;
     if (m) {
       const y = m.precanvas ? m.precanvas.parentElement : null;
       if (y) {
-        const v = y.offsetWidth || 800, x = y.offsetHeight || 600, g = m.zoom || 1, S = m.canvas_x || 0, E = m.canvas_y || 0, z = -S / g, R = -E / g, F = v / g, O = x / g, w = f + (z - i) * u, M = _ + (R - o) * u, C = F * u, k = O * u;
+        const b = y.offsetWidth || 800, x = y.offsetHeight || 600, g = m.zoom || 1, S = m.canvas_x || 0, E = m.canvas_y || 0, z = -S / g, R = -E / g, F = b / g, A = x / g, w = f + (z - i) * u, M = _ + (R - o) * u, C = F * u, k = A * u;
         t.strokeStyle = this.options.viewportBorderColor, t.lineWidth = 1.5, t.fillStyle = this.options.viewportColor, t.fillRect(w, M, C, k), t.strokeRect(w, M, C, k);
       }
     }
@@ -2977,14 +2996,14 @@ class Mt {
   }
 }
 export {
-  bt as AutoSave,
+  vt as AutoSave,
   yt as CanvasMode,
   ft as ConnectionManager,
   gt as ConnectionRules,
   xt as GridBackground,
   Et as KeyboardShortcuts,
   wt as Minimap,
-  vt as MultiSelect,
+  bt as MultiSelect,
   St as NodeContextMenu,
   dt as NodeTypeSystem,
   pt as StateManager,
