@@ -3,8 +3,8 @@ node_modules/
 package-lock.json
 yarn.lock
 
-# Build outputs
-dist/
+# Build outputs — dist/ is committed so users can consume the library
+# directly from GitHub without npm install.
 build/
 *.bundle.js
 
