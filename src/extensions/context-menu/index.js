@@ -233,7 +233,8 @@ class NodeContextMenu {
     }
     try {
       const df = this.dfp.drawflow;
-      const nodes = df.drawflow.drawflow.Home.data || {};
+      const moduleName = df.module || 'Home';
+      const nodes = df.drawflow.drawflow[moduleName].data || {};
       const node = nodes[nodeId];
       return node ? node.name : null;
     } catch (e) {

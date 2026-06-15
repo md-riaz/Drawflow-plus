@@ -168,10 +168,27 @@ class MultiSelect {
     if (!df || typeof df.on !== 'function') return;
 
     df.on('nodeSelected', (id) => {
-      // Single-node click clears multi-selection unless modifier held
-      if (!this._isBoxSelecting) {
-        this.deselectAll();
+      const idStr = String(id);
+      // If clicked node is already in selection, set up group drag data with it as leader
+      if (this._selected.has(idStr)) {
+        const nodes = this._getNodes();
+        const leaderNode = nodes[idStr];
+        if (leaderNode) {
+          const followers = [];
+          this._selected.forEach(selId => {
+            if (selId !== idStr) {
+              const followerNode = nodes[selId];
+              if (followerNode) {
+                followers.push({ id: selId, origX: followerNode.pos_x, origY: followerNode.pos_y });
+              }
+            }
+          });
+          this._groupDragData = { startX: leaderNode.pos_x, startY: leaderNode.pos_y, followers };
+        }
+        return;
       }
+      // Otherwise clear multi-selection (single-node click)
+      this.deselectAll();
     });
 
     if (this.options.groupDragEnabled) {
@@ -313,15 +330,9 @@ class MultiSelect {
       const nodeRect = el.getBoundingClientRect();
       if (this._rectsOverlap(selRect, nodeRect)) {
         this.select(id);
-        // Prepare group drag data
-        const node = nodes[id];
-        if (!this._groupDragData) {
-          this._groupDragData = { startX: node.pos_x, startY: node.pos_y, followers: [] };
-        } else {
-          this._groupDragData.followers.push({ id, origX: node.pos_x, origY: node.pos_y });
-        }
       }
     });
+    // _groupDragData is initialized dynamically in the nodeSelected handler
   }
 
   _rectsOverlap(a, b) {
@@ -361,7 +372,8 @@ class MultiSelect {
   _getNodes() {
     try {
       const df = this.dfp.drawflow;
-      return df.drawflow.drawflow.Home.data || {};
+      const moduleName = df.module || 'Home';
+      return df.drawflow.drawflow[moduleName].data || {};
     } catch (e) {
       return {};
     }

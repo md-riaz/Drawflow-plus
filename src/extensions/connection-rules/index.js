@@ -349,7 +349,8 @@ class ConnectionRules {
   _getNodes() {
     try {
       const df = this.dfp.drawflow;
-      return df.drawflow.drawflow.Home.data || {};
+      const moduleName = df.module || 'Home';
+      return df.drawflow.drawflow[moduleName].data || {};
     } catch (e) {
       return {};
     }

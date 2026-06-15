@@ -218,6 +218,7 @@ class Minimap {
   }
 
   _onClick(e) {
+    if (this._containerEl && this._containerEl.classList.contains('collapsed')) return;
     if (!this._renderBounds) return;
     const rect = this._containerEl.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -282,7 +283,8 @@ class Minimap {
   _getNodes() {
     try {
       const df = this.dfp.drawflow;
-      return df.drawflow.drawflow.Home.data || {};
+      const moduleName = df.module || 'Home';
+      return df.drawflow.drawflow[moduleName].data || {};
     } catch (e) {
       return {};
     }

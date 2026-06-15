@@ -199,6 +199,9 @@ describe('AutoSave', () => {
       dfp.onSave(spy);
       dfp.scheduleSave('full');
       jest.advanceTimersByTime(200);
+      // Flush multiple microtask rounds: saveFn resolves, then _runSave resumes
+      await Promise.resolve();
+      await Promise.resolve();
       await Promise.resolve();
       expect(spy).toHaveBeenCalledWith('full', true, null);
     });

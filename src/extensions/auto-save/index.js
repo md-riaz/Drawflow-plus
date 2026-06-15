@@ -65,11 +65,19 @@ class AutoSave {
 
     if (type === 'position') {
       clearTimeout(this._positionTimer);
-      this._positionTimer = setTimeout(() => this._runSave('position'), this.options.positionDelay);
+      this._positionTimer = setTimeout(() => {
+        this._positionTimer = null;
+        this._runSave('position');
+      }, this.options.positionDelay);
     } else {
       clearTimeout(this._fullTimer);
+      clearTimeout(this._positionTimer);
+      this._positionTimer = null;
       this._pendingPosition = false; // full supersedes position
-      this._fullTimer = setTimeout(() => this._runSave('full'), this.options.delay);
+      this._fullTimer = setTimeout(() => {
+        this._fullTimer = null;
+        this._runSave('full');
+      }, this.options.delay);
     }
   }
 
@@ -183,29 +191,46 @@ class AutoSave {
 
     if (!this._shouldSave()) return;
 
+    // Guard against concurrent saves — queue and run after current save completes
+    if (this._status === 'saving') {
+      if (type === 'full') this._pendingFull = true;
+      else this._pendingPosition = true;
+      return;
+    }
+
     this._status = 'saving';
     if (typeof this.options.onSaveStart === 'function') this.options.onSaveStart(type);
 
     let attempt = 0;
+    let success = false;
+    let lastErr = null;
+
     while (attempt <= this.options.maxRetries) {
       try {
         const payload = this._buildPayload();
         await this.options.saveFn(payload);
-        this._status = 'idle';
-        this._onSaveSuccess();
-        this._notifyListeners(type, true, null);
-        if (typeof this.options.onSaveEnd === 'function') this.options.onSaveEnd(type, true, null);
-        return;
+        success = true;
+        break;
       } catch (err) {
         attempt++;
-        if (attempt > this.options.maxRetries) {
-          this._status = 'error';
-          this._notifyListeners(type, false, err);
-          if (typeof this.options.onSaveEnd === 'function') this.options.onSaveEnd(type, false, err);
-          return;
+        lastErr = err;
+        if (attempt <= this.options.maxRetries) {
+          await this._sleep(this.options.retryBaseDelay * Math.pow(2, attempt - 1));
         }
-        await this._sleep(this.options.retryBaseDelay * Math.pow(2, attempt - 1));
       }
+    }
+
+    this._status = success ? 'idle' : 'error';
+    if (success) this._onSaveSuccess();
+    this._notifyListeners(type, success, success ? null : lastErr);
+    if (typeof this.options.onSaveEnd === 'function') this.options.onSaveEnd(type, success, success ? null : lastErr);
+
+    // Flush any save that was queued while we were in progress
+    if (this._pendingFull || this._pendingPosition) {
+      const nextType = this._pendingFull ? 'full' : 'position';
+      this._pendingFull = false;
+      this._pendingPosition = false;
+      this._runSave(nextType);
     }
   }
 

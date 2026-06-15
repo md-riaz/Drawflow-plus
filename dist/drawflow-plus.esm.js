@@ -1674,14 +1674,14 @@ const _t = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   background-position: var(--dfp-grid-offset-x, 0px) var(--dfp-grid-offset-y, 0px);
 }
 `;
-class gt {
+class mt {
   constructor(t = {}) {
     this._subscribers = /* @__PURE__ */ new Set(), this._styleEl = null, this.options = { ...H, ...t };
   }
   install(t, e = {}) {
     this.dfp = t, this.options = { ...this.options, ...e };
     const s = t.drawflow;
-    if (s && (s.zoom_min = this.options.zoomMin, s.zoom_max = this.options.zoomMax), this.options.enableGrid) {
+    if (s && (s.zoom_min = this.options.zoomMin, s.zoom_max = this.options.zoomMax, typeof s.on == "function" && (s.on("translate", () => this._applyTransform("translate")), s.on("zoom", () => this._applyTransform("zoom")))), this.options.enableGrid) {
       this._injectGridStyles();
       const n = this._getWrapper();
       n && n.classList.add("dfp-canvas-grid");
@@ -1792,7 +1792,8 @@ class gt {
   }
   _getNodes() {
     try {
-      return this.dfp.drawflow.drawflow.drawflow.Home.data || {};
+      const t = this.dfp.drawflow, e = t.module || "Home";
+      return t.drawflow.drawflow[e].data || {};
     } catch {
       return {};
     }
@@ -1805,7 +1806,7 @@ const Z = {
   strict: !0,
   onViolation: null
 };
-class mt {
+class gt {
   constructor(t = {}) {
     this._outputMaxByType = /* @__PURE__ */ new Map(), this._inputMaxByType = /* @__PURE__ */ new Map(), this._outputMaxByNode = /* @__PURE__ */ new Map(), this._inputMaxByNode = /* @__PURE__ */ new Map(), this._typeRules = /* @__PURE__ */ new Map(), this._canConnectFns = [], this._violations = [], this.options = { ...Z, ...t };
   }
@@ -2009,7 +2010,8 @@ class mt {
   }
   _getNodes() {
     try {
-      return this.dfp.drawflow.drawflow.drawflow.Home.data || {};
+      const t = this.dfp.drawflow, e = t.module || "Home";
+      return t.drawflow.drawflow[e].data || {};
     } catch {
       return {};
     }
@@ -2187,7 +2189,21 @@ class vt {
   _hookDrawflow() {
     const t = this.dfp.drawflow;
     !t || typeof t.on != "function" || (t.on("nodeSelected", (e) => {
-      this._isBoxSelecting || this.deselectAll();
+      const s = String(e);
+      if (this._selected.has(s)) {
+        const n = this._getNodes(), i = n[s];
+        if (i) {
+          const o = [];
+          this._selected.forEach((r) => {
+            if (r !== s) {
+              const a = n[r];
+              a && o.push({ id: r, origX: a.pos_x, origY: a.pos_y });
+            }
+          }), this._groupDragData = { startX: i.pos_x, startY: i.pos_y, followers: o };
+        }
+        return;
+      }
+      this.deselectAll();
     }), this.options.groupDragEnabled && t.on("nodeMoved", this._onNodeMoved));
   }
   _onNodeMoved(t) {
@@ -2247,11 +2263,7 @@ class vt {
       const n = document.getElementById(`node-${s}`);
       if (!n) return;
       const i = n.getBoundingClientRect();
-      if (this._rectsOverlap(t, i)) {
-        this.select(s);
-        const o = e[s];
-        this._groupDragData ? this._groupDragData.followers.push({ id: s, origX: o.pos_x, origY: o.pos_y }) : this._groupDragData = { startX: o.pos_x, startY: o.pos_y, followers: [] };
-      }
+      this._rectsOverlap(t, i) && this.select(s);
     });
   }
   _rectsOverlap(t, e) {
@@ -2279,7 +2291,8 @@ class vt {
   }
   _getNodes() {
     try {
-      return this.dfp.drawflow.drawflow.drawflow.Home.data || {};
+      const t = this.dfp.drawflow, e = t.module || "Home";
+      return t.drawflow.drawflow[e].data || {};
     } catch {
       return {};
     }
@@ -2313,7 +2326,11 @@ class bt {
       t === "position" ? this._pendingPosition = !0 : this._pendingFull = !0;
       return;
     }
-    t === "position" ? (clearTimeout(this._positionTimer), this._positionTimer = setTimeout(() => this._runSave("position"), this.options.positionDelay)) : (clearTimeout(this._fullTimer), this._pendingPosition = !1, this._fullTimer = setTimeout(() => this._runSave("full"), this.options.delay));
+    t === "position" ? (clearTimeout(this._positionTimer), this._positionTimer = setTimeout(() => {
+      this._positionTimer = null, this._runSave("position");
+    }, this.options.positionDelay)) : (clearTimeout(this._fullTimer), clearTimeout(this._positionTimer), this._positionTimer = null, this._pendingPosition = !1, this._fullTimer = setTimeout(() => {
+      this._fullTimer = null, this._runSave("full");
+    }, this.options.delay));
   }
   flush() {
     if (clearTimeout(this._fullTimer), clearTimeout(this._positionTimer), this._fullTimer = null, this._positionTimer = null, this._pendingFull || this._pendingPosition) {
@@ -2381,20 +2398,24 @@ class bt {
       return;
     }
     if (!this._shouldSave()) return;
+    if (this._status === "saving") {
+      t === "full" ? this._pendingFull = !0 : this._pendingPosition = !0;
+      return;
+    }
     this._status = "saving", typeof this.options.onSaveStart == "function" && this.options.onSaveStart(t);
-    let e = 0;
+    let e = 0, s = !1, n = null;
     for (; e <= this.options.maxRetries; )
       try {
-        const s = this._buildPayload();
-        await this.options.saveFn(s), this._status = "idle", this._onSaveSuccess(), this._notifyListeners(t, !0, null), typeof this.options.onSaveEnd == "function" && this.options.onSaveEnd(t, !0, null);
-        return;
-      } catch (s) {
-        if (e++, e > this.options.maxRetries) {
-          this._status = "error", this._notifyListeners(t, !1, s), typeof this.options.onSaveEnd == "function" && this.options.onSaveEnd(t, !1, s);
-          return;
-        }
-        await this._sleep(this.options.retryBaseDelay * Math.pow(2, e - 1));
+        const i = this._buildPayload();
+        await this.options.saveFn(i), s = !0;
+        break;
+      } catch (i) {
+        e++, n = i, e <= this.options.maxRetries && await this._sleep(this.options.retryBaseDelay * Math.pow(2, e - 1));
       }
+    if (this._status = s ? "idle" : "error", s && this._onSaveSuccess(), this._notifyListeners(t, s, s ? null : n), typeof this.options.onSaveEnd == "function" && this.options.onSaveEnd(t, s, s ? null : n), this._pendingFull || this._pendingPosition) {
+      const i = this._pendingFull ? "full" : "position";
+      this._pendingFull = !1, this._pendingPosition = !1, this._runSave(i);
+    }
   }
   _onSaveSuccess() {
     const t = this.dfp.getExtension("state");
@@ -2630,8 +2651,8 @@ class St {
       if (s) return s.typeId;
     }
     try {
-      const i = (this.dfp.drawflow.drawflow.drawflow.Home.data || {})[t];
-      return i ? i.name : null;
+      const s = this.dfp.drawflow, n = s.module || "Home", o = (s.drawflow.drawflow[n].data || {})[t];
+      return o ? o.name : null;
     } catch {
       return null;
     }
@@ -2815,14 +2836,14 @@ class wt {
     const { minX: i, minY: o, maxX: r, maxY: a } = n, l = r - i || 1, d = a - o || 1, h = (e - 16) / l, p = (s - 16) / d, u = Math.min(h, p), f = 8 + (e - 16 - l * u) / 2, _ = 8 + (s - 16 - d * u) / 2, D = this._getNodes();
     t.fillStyle = this.options.nodeColor;
     for (const [y, v] of Object.entries(D)) {
-      const x = f + (v.pos_x - i) * u, m = _ + (v.pos_y - o) * u, S = Math.max(4, 240 * u), E = Math.max(3, 80 * u);
-      t.fillRect(x, m, S, E);
+      const x = f + (v.pos_x - i) * u, g = _ + (v.pos_y - o) * u, S = Math.max(4, 240 * u), E = Math.max(3, 80 * u);
+      t.fillRect(x, g, S, E);
     }
-    const g = this.dfp.drawflow;
-    if (g) {
-      const y = g.precanvas ? g.precanvas.parentElement : null;
+    const m = this.dfp.drawflow;
+    if (m) {
+      const y = m.precanvas ? m.precanvas.parentElement : null;
       if (y) {
-        const v = y.offsetWidth || 800, x = y.offsetHeight || 600, m = g.zoom || 1, S = g.canvas_x || 0, E = g.canvas_y || 0, z = -S / m, R = -E / m, F = v / m, O = x / m, w = f + (z - i) * u, M = _ + (R - o) * u, C = F * u, k = O * u;
+        const v = y.offsetWidth || 800, x = y.offsetHeight || 600, g = m.zoom || 1, S = m.canvas_x || 0, E = m.canvas_y || 0, z = -S / g, R = -E / g, F = v / g, O = x / g, w = f + (z - i) * u, M = _ + (R - o) * u, C = F * u, k = O * u;
         t.strokeStyle = this.options.viewportBorderColor, t.lineWidth = 1.5, t.fillStyle = this.options.viewportColor, t.fillRect(w, M, C, k), t.strokeRect(w, M, C, k);
       }
     }
@@ -2856,7 +2877,7 @@ class wt {
     i.top = i.bottom = i.left = i.right = "", t === "top-left" ? (i.top = `${e}px`, i.left = `${e}px`) : t === "top-right" ? (i.top = `${e}px`, i.right = `${e}px`) : t === "bottom-left" ? (i.bottom = `${e}px`, i.left = `${e}px`) : (i.bottom = `${e}px`, i.right = `${e}px`);
   }
   _onClick(t) {
-    if (!this._renderBounds) return;
+    if (this._containerEl && this._containerEl.classList.contains("collapsed") || !this._renderBounds) return;
     const e = this._containerEl.getBoundingClientRect(), s = t.clientX - e.left, n = t.clientY - e.top, { minX: i, minY: o, scale: r, offsetX: a, offsetY: l } = this._renderBounds, d = (s - a) / r + i, h = (n - l) / r + o;
     this._navigateListeners.forEach((p) => p({ worldX: d, worldY: h })), typeof this.dfp.panTo == "function" && this.dfp.panTo(d, h);
   }
@@ -2885,7 +2906,8 @@ class wt {
   }
   _getNodes() {
     try {
-      return this.dfp.drawflow.drawflow.drawflow.Home.data || {};
+      const t = this.dfp.drawflow, e = t.module || "Home";
+      return t.drawflow.drawflow[e].data || {};
     } catch {
       return {};
     }
@@ -2958,7 +2980,7 @@ export {
   bt as AutoSave,
   yt as CanvasMode,
   ft as ConnectionManager,
-  mt as ConnectionRules,
+  gt as ConnectionRules,
   xt as GridBackground,
   Et as KeyboardShortcuts,
   wt as Minimap,
@@ -2969,7 +2991,7 @@ export {
   ht as UIBuilder,
   _t as Utils,
   ut as ValidationFramework,
-  gt as ViewportManager,
+  mt as ViewportManager,
   Mt as default
 };
 //# sourceMappingURL=drawflow-plus.esm.js.map

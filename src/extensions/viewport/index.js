@@ -38,6 +38,11 @@ class ViewportManager {
     if (df) {
       df.zoom_min = this.options.zoomMin;
       df.zoom_max = this.options.zoomMax;
+      // Sync subscribers when DrawFlow's native pan/zoom fires
+      if (typeof df.on === 'function') {
+        df.on('translate', () => this._applyTransform('translate'));
+        df.on('zoom', () => this._applyTransform('zoom'));
+      }
     }
 
     if (this.options.enableGrid) {
@@ -266,7 +271,8 @@ class ViewportManager {
   _getNodes() {
     try {
       const df = this.dfp.drawflow;
-      return df.drawflow.drawflow.Home.data || {};
+      const moduleName = df.module || 'Home';
+      return df.drawflow.drawflow[moduleName].data || {};
     } catch (e) {
       return {};
     }
